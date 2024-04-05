@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+{% block content %}
+    <h1>MONOLITH P&ID</h1>
+
+    {# ############# SEQUENCES ############## #}
+    <button onclick="fetch('/start-sequence/1')">SEQUENCE 1</button>
+
+    {# ############# SERVER-SENT EVENTS ############## #}
+    <script>
+        // Subscribe to the server-sent events
+        const eventSource = new EventSource("/stream");
+        eventSource.onmessage = (msg) => {
+            // Parse comma separated values
+            console.log(msg)
+            const updated_objects = msg.data
+                .split(",")
+                .map((item) => {
+                    const parts = item.split("=");
+                    if (parts.length === 2) {
+                        return [parts[0], parseInt(parts[1])];
+                    } else {
+                        return null;
+                    }
+                })
+                .filter((item) => item !== null);
+
+            // Update the valves
+            for ([id, state] of updated_objects) {
+                const object = document.getElementById(id);
+                if (!object) {
+                    continue;
+                }
+                if (id.startsWith("valve-")) {
+                    const valve = object.querySelector(".valve-icon");
+                    if (state === 1) {
+                        valve.transform.baseVal.getItem(0).setRotate(0, 25, 25);
+                    } else {
+                        valve.transform.baseVal.getItem(0).setRotate(90, 25, 25);
+                    }
+                } else if (id.startsWith("pres-") || id.startsWith("temp-")) {
+                    const value = object.querySelector(".value");
+                    value.textContent = state;
+                }
+            }
+        };
+    </script>
+    {# ############# SVG MACROS ############## #}
+ 
+    {# BUTTON MACRO #}
+    {% macro
+        button(text, onclick, x, y) %}
+        <g class="button" onclick="{{ onclick }}" transform="translate({{ x }}, {{ y }})">
+        <rect x="0" y="0" width="50" height="20" fill="gray" stroke="none" rx="5" />
+        <text x="25" y="15" text-anchor="middle" fill="white" stroke="none">{{ text }}</text>
+        </g>
+    {% endmacro %}
+
+    {# VALVE MACRO #}
+    {% macro valve(id, x, y) %}
+        <g id="{{ id }}" transform="translate({{ x - valve_width / 2 }},{{ y - valve_height / 2 }})">
+        <text x="-5" y="10" text-anchor="end" fill="white" stroke="none">{{ id.split("-")[1] }}</text>
+        {{ button("open", "fetch('/valve-open/" + id + "')", 0, -25) }}
+        <g class="valve-icon" transform="rotate(0)">
+        {% include "icons/valve.svg" %}
+        </g>
+        {{ button("close", "fetch('/valve-close/" + id + "')", 0, 50) }}
+        </g>
+    {% endmacro %}
+
+    {# LINE MACRO #}
+    {% macro line(x1, y1, x2, y2) %}
+        <line x1="{{ x1 }}" y1="{{ y1 }}" x2="{{ x2 }}" y2="{{ y2 }}" />
+    {% endmacro %}
+
+    {# ENGINE MACRO #}
+    {% macro engine(x, y) %}
+        <g transform="translate({{ x - engine_width / 2 }}, {{ y }})">
+        {% include "icons/engine.svg" %}
+        </g>
+    {% endmacro %}
+
+    {# TANK MACRO #}
+    {% macro tank(x, y) %}
+        <g transform="translate({{ x - tank_width / 2 }}, {{ y }})">
+        {% include "icons/tank.svg" %}
+        </g>
+    {% endmacro %}
+
+    {# PRES SENSOR MACRO #}
+    {% macro pres_sensor(id, x, y) %}
+        <g id="{{ id }}" transform="translate({{ x - sense_width / 2 }}, {{ y - sense_height / 2 - 50 }})">
+        <text x="-5" y="10" text-anchor="end" fill="white" stroke="none">{{ id.split("-")[1] }}</text>
+        <text class="value" x="{{ sense_width / 2 }}" y="{{ -10 }} " text-anchor="middle" fill="white" stroke="none">0</text>
+        {% include "icons/sensor.svg" %}
+        </g>
+    {% endmacro %}
+
+    {# TEMP SENSOR MACRO #}
+    {% macro temp_sensor(id, x, y) %}
+        <g id="{{ id }}" transform="translate({{ x - sense_width / 2 }}, {{ y - sense_height / 2 + 50 }})">
+        <text class="value" x="{{ sense_width / 2 }}" y="{{ sense_height + 20 }} " text-anchor="middle" fill="white" stroke="none">0</text>
+        {% include "icons/sensor.svg" %}
+        </g>
+    {% endmacro %}
+
+    {# ############# SVG STYLES ############# #}
+    <style>
+        .button {
+            fill: gray;
+            cursor: pointer;
+        }
+
+        .button:hover rect {
+            fill: darkgray;
+        }
+
+        .button text {
+            font: 12px sans-serif;
+        }
+    </style>
+
+    {# ############# SVG DIAGRAM ############# #}
+    {% set canvas_width, canvas_height = 1200, 800 %}
+    {% set valve_width, valve_height = 50, 50 %}
+    {% set engine_width, engine_height = 50, 70 %}
+    {% set tank_width, tank_height = 100, 300 %}
+    {% set sense_width, sense_height = 20, 20 %}
+
+    {% set engine_x, engine_y = canvas_width / 2, canvas_height - 100 %}
+
+    {% set tank_x_offset, tank_y_offset = 300, 100 %}
+
+    {% set fuel_tank_top_x, fuel_tank_top_y = engine_x - tank_x_offset, engine_y - tank_y_offset - tank_height %}
+    {% set oxy_tank_top_x, oxy_tank_top_y = engine_x + tank_x_offset, engine_y - tank_y_offset - tank_height %}
+
+    {% set main_valve_x_offset, main_valve_y_offset = 200, 0 %}
+    {% set feed_valve_x_offset, feed_valve_y_offset = 400, 0 %}
+    {% set pres_valve_x_offset, pres_valve_y_offset = 100, 100 %}
+    {% set vent_valve_x_offset, vent_valve_y_offset = -100, 100 %}
+
+    {% set engine_pres_x_offset, engine_pres_y_offset = 100, 0 %}
+
+    <svg version="1.1"
+         width="{{ canvas_width }}"
+         height="{{ canvas_height }}"
+         stroke="white"
+         fill="none"
+         xmlns="http://www.w3.org/2000/svg">
+        {{ engine(engine_x, engine_y) }}
+
+        {{ tank(fuel_tank_top_x, fuel_tank_top_y) }}
+        {{ tank(oxy_tank_top_x, oxy_tank_top_y) }}
+
+        {{ valve('valve-FM', engine_x - main_valve_x_offset, engine_y) }}
+        {{ valve('valve-OM', engine_x + main_valve_x_offset, engine_y) }}
+
+        {{ valve('valve-FF', engine_x - feed_valve_x_offset, engine_y) }}
+        {{ valve('valve-OF', engine_x + feed_valve_x_offset, engine_y) }}
+
+        {{ valve('valve-FP', fuel_tank_top_x - pres_valve_x_offset, fuel_tank_top_y - vent_valve_y_offset) }}
+        {{ valve('valve-OP', oxy_tank_top_x + pres_valve_x_offset, oxy_tank_top_y - vent_valve_y_offset) }}
+
+        {{ valve('valve-FV', fuel_tank_top_x - vent_valve_x_offset, fuel_tank_top_y - vent_valve_y_offset) }}
+        {{ valve('valve-OV', oxy_tank_top_x + vent_valve_x_offset, oxy_tank_top_y - vent_valve_y_offset) }}
+
+        {{ line(engine_x - engine_width / 2, engine_y, engine_x - main_valve_x_offset + valve_width / 2, engine_y) }}
+        {{ line(engine_x + engine_width / 2, engine_y, engine_x + main_valve_x_offset - valve_width / 2, engine_y) }}
+
+        {{ line(engine_x - tank_x_offset, engine_y, engine_x - main_valve_x_offset - valve_width / 2, engine_y) }}
+        {{ line(engine_x - tank_x_offset, engine_y, engine_x - feed_valve_x_offset + valve_width / 2, engine_y) }}
+        {{ line(engine_x - tank_x_offset, engine_y, engine_x - tank_x_offset, engine_y - tank_y_offset) }}
+
+        {{ line(engine_x + tank_x_offset, engine_y, engine_x + main_valve_x_offset + valve_width / 2, engine_y) }}
+        {{ line(engine_x + tank_x_offset, engine_y, engine_x + feed_valve_x_offset - valve_width / 2, engine_y) }}
+        {{ line(engine_x + tank_x_offset, engine_y, engine_x + tank_x_offset, engine_y - tank_y_offset) }}
+
+        {{ line(fuel_tank_top_x, fuel_tank_top_y - pres_valve_y_offset, fuel_tank_top_x + pres_valve_x_offset - valve_width / 2, fuel_tank_top_y - pres_valve_y_offset) }}
+        {{ line(fuel_tank_top_x, fuel_tank_top_y - pres_valve_y_offset, fuel_tank_top_x + vent_valve_x_offset + valve_width / 2, fuel_tank_top_y - vent_valve_y_offset) }}
+        {{ line(fuel_tank_top_x, fuel_tank_top_y - pres_valve_y_offset, fuel_tank_top_x, fuel_tank_top_y) }}
+
+        {{ line(oxy_tank_top_x, oxy_tank_top_y - pres_valve_y_offset, oxy_tank_top_x - pres_valve_x_offset + valve_width / 2, oxy_tank_top_y - pres_valve_y_offset) }}
+        {{ line(oxy_tank_top_x, oxy_tank_top_y - pres_valve_y_offset, oxy_tank_top_x - vent_valve_x_offset - valve_width / 2, oxy_tank_top_y - vent_valve_y_offset) }}
+        {{ line(oxy_tank_top_x, oxy_tank_top_y - pres_valve_y_offset, oxy_tank_top_x, oxy_tank_top_y) }}
+
+        {{ pres_sensor('pres-FE', engine_x - engine_pres_x_offset, engine_y - engine_pres_y_offset) }}
+        {{ pres_sensor('pres-OE', engine_x + engine_pres_x_offset, engine_y - engine_pres_y_offset) }}
+
+        {{ temp_sensor('temp-FE', engine_x - engine_pres_x_offset, engine_y - engine_pres_y_offset) }}
+        {{ temp_sensor('temp-OE', engine_x + engine_pres_x_offset, engine_y - engine_pres_y_offset) }}
+    </svg>
+{% endblock content %}

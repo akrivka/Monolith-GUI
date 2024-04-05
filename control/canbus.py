@@ -95,6 +95,9 @@ class Frame:
 	Canbus interface implementation/wrapper
 """
 
+# import nixnet
+# from nixnet import system
+# from nixnet import constants
 
 
 

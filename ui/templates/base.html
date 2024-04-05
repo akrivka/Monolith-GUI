@@ -1,0 +1,22 @@
+{# templates/base.html #}
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+
+    <link href="/assets/styles.css" rel="stylesheet" />
+    <link
+      href="/assets/favicon.svg"
+      rel="icon"
+      type="image/svg+xml"
+    />
+
+    <title>Monolith</title>
+  </head>
+
+  <body>
+    {% block content %}{% endblock %}
+  </body>
+</html>
