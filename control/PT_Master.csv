@@ -1,0 +1,6 @@
+CanID,ID,P_Low,P_High,V_Low,V_High,C_Low,C_High,Type,Manufacturer,Serial
+0x03,1,0,500,0,10,NaN,NaN,V,Ashcroft,22120921210
+0x04,2,0,1000,0,5,NaN,NaN,V,Ashcroft,23061310055
+0x05,3,0,1000,0,5,NaN,NaN,V,Ashcroft,23061310057
+0x06,4,0,1000,0,5,NaN,NaN,V,Ashcroft,3092706228
+null,5,0,300,0,5,NaN,NaN,V,Ashcroft,3061223270

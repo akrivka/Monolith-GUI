@@ -6,6 +6,8 @@ import nixnet
 from nixnet import system
 from nixnet import constants
 from time import sleep
+from can import Message
+import csv
 # import tomli
 # import nixnet
 # from nixnet import system
@@ -13,6 +15,9 @@ from time import sleep
 
 import datetime
 import time
+
+FUEL_SWITCH_LOOKUP = {0: "FFSO", 1: "FFSC", 2: "FMSO", 3: "FMSC", 4: "FVSO", 5: "FVSC", 6: "FPSO", 7: "FPSC"}
+LOX_SWITCH_LOOKUP = {0: "OFSO", 1: "OFSC", 2: "OMSO", 3: "OMSC", 4: "OVSO", 5: "OVSC", 6: "OPSO", 7: "OPSC"}
 
 # # Get CAN interface
 # can_interfaces = system.System().intf_refs_can
@@ -64,11 +69,14 @@ class Frame:
     def get_timestamp(self):
         """Takes the hex epoch returned by the Can frame (results in integer 
            value of timestamp), and returns it in datetime format
+
+           Actually, right now, until we determine what the can bus frame of 
+           reference is for the timestamp (currently outputting 1974), just grabs
+           timestamp of time of processing.
         """
-        timestamp = self.frame.timestamp
-        datetime_obj = datetime.datetime.fromtimestamp(timestamp)
-        # potential for incorrect timestamp reading/error
-        return datetime_obj
+        timestamp = self.timestamp # tbd what time this is
+        not_can_time = datetime.datetime.now()
+        return not_can_time
 
     
     def get_payload(self):
@@ -90,14 +98,49 @@ class Frame:
         """
         val = byte_list[0] * byte_list[1] * 0xFF
         return val
+        
+    def sort_by_id(self):
+        idn = str(self.identifier)
+        idn = idn[14: len(idn) - 1]
+        hex_idn = int(idn, 16)
+        id = hex(hex_idn)
+        payload = str(self.payload)
+        payload = payload[3: len(payload) - 1]
+        byte_list = payload.split('\\')
+        byte_list = [i[1:] for i in byte_list]
+        byte_list = [hex(int(bytes.fromhex(i))) for i in byte_list]       
+        if id == "0x1":
+            message = "Fuel Switches: "
+            for i in range(len(byte_list)):
+                if byte_list[i] == "0x01":
+                    message += FUEL_SWITCH_LOOKUP[i] + " "
+            return message
+        if id == "0x2":
+            message = "LOX Switches: "
+            for i in range(len(byte_list)):
+                if byte_list[i] == "0x01":
+                    message += LOX_SWITCH_LOOKUP[i] + " "
+            return message
+        else: 
+            voltage = int(byte_list[0], 16) * int(byte_list[1], 16) * 0XFF
+            with open("PT_Master.csv") as csv_file:
+                reader = csv.DictReader(csv_file)
+                for row in reader:
+                    if self.identifier == row["CanID"]:
+                        m = (row["P_High"] - row["P_Low"])/(row["V_High"] - row["V_Low"])
+                        b = row["P_Low"] - (m * row["P_High"])
+                        pressure = (voltage * m) + b
+                        return pressure
+                    else:
+                        return voltage
+    
+    # def send_msg(self):
+    #     message = Message()
 
 """
 	Canbus interface implementation/wrapper
 """
 
-# import nixnet
-# from nixnet import system
-# from nixnet import constants
 
 
 
