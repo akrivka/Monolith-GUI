@@ -1,4 +1,3 @@
-# from ui.server import enqueue_event
 from time import time
 from random import randint
 import nixnet
@@ -7,7 +6,7 @@ from nixnet import constants
 from canbus import Frame
 
 
-def control_loop():
+def control_loop(enqueue_ui_event, control_queue):
     """
     This is the control loop for the monolith project.
     """
@@ -32,32 +31,35 @@ def control_loop():
         input_session.start()
 
     while True:
-        ############################################
-        # TO BE REPLACD BY CECE
         frames = input_session.frames.read(10000, constants.TIMEOUT_NONE)
         for frame in frames:
             print(Frame.get_timestamp(frame))
             print(Frame.sort_by_id(frame))
-        # If 100ms has passed send new dummy pres/temp data
+
+        ############################################
+        # EXAMPLE
+
+        # Check for control messages (these come from the UI)
+        if not control_queue.empty():
+            msg = control_queue.get()
+
+            # handle messgae (e.g. open or close valve)
+
+            # send update back to UI
+            enqueue_ui_event(msg)
+
+        # Sending dummy data to UI for pres and temp sensors
         if time() - last_time > 0.1:
             last_time = time()
             # generate random number from 0 to 100
-            enqueue_event(
+            enqueue_ui_event(
                 [
-                    ("pres-FE", randint(1, 100)),
-                    ("temp-FE", randint(1, 25)),
-                    ("pres-OE", randint(1, 100)),
-                    ("temp-OE", randint(1, 25)),
+                    ("pres-FE", randint(1, 100), last_time),
+                    ("temp-FE", randint(1, 25), last_time),
+                    ("pres-OE", randint(1, 100), last_time),
+                    ("temp-OE", randint(1, 25), last_time),
                 ]
             )
-
-        # Read can messages
-            
-        # Respond immediately to can messages
-            
-        # Send events to UI
-            
-        # Check if sequence event should happen
 
         ############################################
 
