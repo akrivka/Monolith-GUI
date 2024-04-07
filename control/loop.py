@@ -1,9 +1,9 @@
-from time import time
 from random import randint
 import nixnet
 from nixnet import system
 from nixnet import constants
 from canbus import Frame
+import time
 
 
 def control_loop(enqueue_ui_event, control_queue):
@@ -92,6 +92,8 @@ if __name__ == "__main__":
         for i in range(0, 10):
             frames = input_session.frames.read(10000, constants.TIMEOUT_NONE)
             for frame in frames:
-                print(Frame.get_timestamp(frame))
-                print(Frame.sort_by_id(frame))
+                frame = Frame(frame.timestamp, frame.identifier, frame.payload)
+                print(frame.identifier)
+                print(frame.get_can_id())
+                print(frame.sort_by_id())
             time.sleep(0.5)

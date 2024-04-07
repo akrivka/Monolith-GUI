@@ -54,14 +54,25 @@ class Frame:
             3) Payload -- an 8-byte value 
         Returns theses processed values for use in GUI/Dashboard.
     """
+    FUEL_SWITCH_STATUS = {'FFSO' : 0x0, 'FFSC': 0x0, 'FMSO': 0x0, 'FMSC': 0x0, 'FVSO': 0x0, 'FVSC': 0x0, 'FPSO': 0x0, 'FPSC': 0x0}
+    LOX_SWITCH_STATUS = {'OFSO' : 0x0, 'OFSC': 0x0, 'OMSO': 0x0, 'OMSC': 0x0, 'OVSO': 0x0, 'OVSC': 0x0, 'OPSO': 0x0, 'OPSC': 0x0}
 
-    def __init__(self, frame):
-        self.frame = frame
+    def __init__(self, timestamp, identifier, payload):
+        """Breaks down Canbus messages (frames) into readable data packets including
+            1) CanIdentifier -- number in hex representing data type
+            2) TimeStamp -- Epoch Hex data
+            3) Payload -- an 8-byte value 
+        """
+        self.timestamp = timestamp
+        self.identifier = identifier
+        self.payload = payload
     
     def get_can_id(self):
         """Takes the CanIdentifier object and returns the ID in hex
+
+            Example output: a CanIdentifier(0x2) would return 0x2 
         """
-        idn = str(self.frame.identifier)
+        idn = str(self.identifier)
         idn = idn[14: len(idn) - 1]
         hex_idn = int(idn, 16)
         return hex(hex_idn)
@@ -73,94 +84,97 @@ class Frame:
            Actually, right now, until we determine what the can bus frame of 
            reference is for the timestamp (currently outputting 1974), just grabs
            timestamp of time of processing.
+           
+           Example output: 2024-04-07 14:20:57.329298
         """
-        timestamp = self.timestamp # tbd what time this is
+        # timestamp = self.timestamp # tbd what time this is
         not_can_time = datetime.datetime.now()
         return not_can_time
 
     
     def get_payload(self):
         """Takes b'string provided by the Can Bus frame and returns a list of
-           8 8-bit values in hex
+           8 8-bit values in decimal
+
+           Example output: [19, 0, 0, 0, 0, 0, 0, 0]
         """
-        payload = str(self.frame.payload)
-        payload = payload[3: len(payload) - 1]
-        byte_list = payload.split('\\')
-        byte_list = ["0" + i for i in byte_list]
-        byte_list = [hex(int(i, 16)) for i in byte_list]
-        return byte_list
+        payload = list(self.payload)
+        print(payload)
+        return payload
     
     # if 3 <= hex_idn <= 9:
     def get_hi_low_val(self, byte_list):
         """Given a list of 8 bytes, returns the value using
            Low byte and High byte where byte 0 is low, and byte
            1 is high
+
+           Example output: 0
         """
         val = byte_list[0] * byte_list[1] * 0xFF
         return val
         
     def sort_by_id(self):
-        idn = str(self.identifier)
-        idn = idn[14: len(idn) - 1]
-        hex_idn = int(idn, 16)
-        id = hex(hex_idn)
-        payload = str(self.payload)
-        payload = payload[3: len(payload) - 1]
-        byte_list = payload.split('\\')
-        byte_list = [i[1:] for i in byte_list]
-        byte_list = [hex(int(bytes.fromhex(i))) for i in byte_list]       
-        if id == "0x1":
+        """Given a frame, returns either valve statuses or a pressure, or a temperature.
+
+            Example output: 
+            LOX Switches: {'OFSO': 'Closed', 'OFSC': 'Closed', 'OMSO': 'Closed', 'OMSC': 'Closed', 'OVSO': 'Closed', 'OVSC': 'Closed', 'OPSO': 'Closed', 'OPSC': 'Closed'}
+            0 --> a voltage or temperature
+        """
+        id = self.get_can_id()
+        byte_list = self.get_payload()
+
+        """Returns list of opened valves"""
+
+        if id == "0x1":       # Returns open fuel valves
             message = "Fuel Switches: "
+            switch_dictionary = {}
             for i in range(len(byte_list)):
-                if byte_list[i] == "0x01":
-                    message += FUEL_SWITCH_LOOKUP[i] + " "
-            return message
-        if id == "0x2":
+                if byte_list[i] == 0:
+                    switch_dictionary[FUEL_SWITCH_LOOKUP[i]] = "Closed"
+                else:
+                    switch_dictionary[FUEL_SWITCH_LOOKUP[i]] = "Open"
+            return message + str(switch_dictionary)
+        
+        if id == "0x2":   # Returns open oxygen valves
             message = "LOX Switches: "
+            switch_dictionary = {}
             for i in range(len(byte_list)):
-                if byte_list[i] == "0x01":
-                    message += LOX_SWITCH_LOOKUP[i] + " "
-            return message
+                if byte_list[i] == 0:
+                    switch_dictionary[LOX_SWITCH_LOOKUP[i]] = "Closed"
+                else:
+                    switch_dictionary[LOX_SWITCH_LOOKUP[i]] = "Open"
+            return message + str(switch_dictionary)
+        
         else: 
-            voltage = int(byte_list[0], 16) * int(byte_list[1], 16) * 0XFF
-            with open("PT_Master.csv") as csv_file:
+            voltage = self.get_hi_low_val(byte_list)
+            with open("control/PT_Master.csv") as csv_file:
                 reader = csv.DictReader(csv_file)
                 for row in reader:
-                    if self.identifier == row["CanID"]:
-                        m = (row["P_High"] - row["P_Low"])/(row["V_High"] - row["V_Low"])
-                        b = row["P_Low"] - (m * row["P_High"])
+                    if id == row["CanID"]:
+                        m = (int(row["P_High"]) - int(row["P_Low"]))/(int(row["V_High"]) - int(row["V_Low"]))
+                        b = int(row["P_Low"]) - (m * int(row["P_High"]))
                         pressure = (voltage * m) + b
                         return pressure
                     else:
                         return voltage
     
-    # def send_msg(self):
-    #     message = Message()
+    def construct_message(self, fuel, open, valve):
+        changed_position = None
+        if open:
+            changed_position = 0x1
+        if not open:
+            changed_position = 0x0
+        if fuel:
+            id = nixnet.CanIdentifier(0x1)
+
+        if not fuel:
+            id = nixnet.CanIdentifier(0x2)
+
+        
+
+    
+    
 
 """
 	Canbus interface implementation/wrapper
 """
-
-
-
-
-def read():
-    with nixnet.FrameInStreamSession("CAN1") as input_session:
-        input_session.intf.can_term = constants.CanTerm.OFF
-        input_session.intf.baud_rate = 250000
-        input_session.intf.can_fd_baud_rate = 250000
-        frames = input_session.frames.read(8)
-        for frame in frames:
-            print("Received frame:")
-            print(frame)
-            print(frame.payload)
-            frame = Frame(frame)
-            bytes = frame.get_payload()
-            print(bytes)
-            for byte in bytes:
-                if byte != '0x0':
-                    print("byte " + str(bytes.index(byte)) + " high")
-            
-
-while True:
-    read()
