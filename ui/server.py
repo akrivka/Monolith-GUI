@@ -4,7 +4,7 @@ import threading
 
 
 ##############################
-# HELPER FUNCTIONS
+# FLASK SERVER
 ##############################
 
 
@@ -18,7 +18,7 @@ def process_event(updated_objects):
     )
 
 
-def create_server(enqueue_controL_event, ui_announcer):
+def create_server(enqueue_control_event, ui_announcer):
     app = Flask("Monolith", template_folder="ui/templates")
 
     @app.route("/stream", methods=["GET"])
@@ -40,12 +40,12 @@ def create_server(enqueue_controL_event, ui_announcer):
 
         # For now assume it succeeded
         # ui_announcer.announce([(valve_id, 0)])
-        enqueue_controL_event([(valve_id, 0, -1)])
+        enqueue_control_event([(valve_id, 0, -1)])
         return {}, 200
 
     @app.route("/valve-open/<valve_id>", methods=["GET"])
     def open_valve(valve_id):
-        enqueue_controL_event([(valve_id, 1, -1)])
+        enqueue_control_event([(valve_id, 1, -1)])
         return {}, 200
 
     @app.route("/")
@@ -74,9 +74,9 @@ def ui_loop(ui_queue, announcer):
 
 
 # Start server
-def start_server(enqueue_controL_event, ui_queue):
+def start_server(enqueue_control_event, ui_queue):
     announcer = MessageAnnouncer()
-    app = create_server(enqueue_controL_event, announcer)
+    app = create_server(enqueue_control_event, announcer)
     app.debug = False
 
     loop_thread = threading.Thread(

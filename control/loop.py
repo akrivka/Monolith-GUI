@@ -1,6 +1,6 @@
 from random import randint
-from canbus import Frame, CanBus
-import time
+from control.canbus_stub import Frame, CanBus
+from time import time
 
 
 def control_loop(enqueue_ui_event, control_queue):
@@ -12,7 +12,8 @@ def control_loop(enqueue_ui_event, control_queue):
     canbus = CanBus()
     canbus.start()
     while True:
-        canbus.read()
+        msg = canbus.read()
+        print(msg)
         ############################################
         # EXAMPLE
 
