@@ -47,6 +47,41 @@ LOX_SWITCH_LOOKUP = {0: "OFSO", 1: "OFSC", 2: "OMSO", 3: "OMSC", 4: "OVSO", 5: "
 #         time.sleep(0.1)
 
 
+
+class CanBus:
+    """
+    """
+    def __init__(self):
+        can_interfaces = system.System().intf_refs_can
+        can_list = [can_interface for can_interface in can_interfaces]
+
+        if not can_list:
+            raise Exception("No CAN interfaces found")
+            
+        can_interface = can_list[0]
+        # print(can_interface)
+
+        can_database = 'Current_Database'
+        can_cluster = ':memory:'
+
+
+        self.input_session = nixnet.FrameInStreamSession(str(can_interface), str(can_database), str(can_cluster))
+
+  
+    def start(self):
+        self.input_session.intf.can_term = constants.CanTerm.OFF
+        self.input_session.intf.baud_rate = 250000
+        self.input_session.intf.can_fd_baud_rate = 250000
+
+        self.input_session.start()
+    
+    def read(self):
+        frames = self.input_session.frames.read(10000, constants.TIMEOUT_NONE)
+        for frame in frames:
+            frame = Frame(frame.timestamp, frame.identifier, frame.payload)
+            print(frame.get_timestamp())
+            print(frame.sort_by_id())
+
 class Frame:
     """Breaks down Canbus messages (frames) into readable data packets including
             1) CanIdentifier -- number in hex representing data type
@@ -147,7 +182,7 @@ class Frame:
         
         else: 
             voltage = self.get_hi_low_val(byte_list)
-            with open("control/PT_Master.csv") as csv_file:
+            with open("PT_Master.csv") as csv_file:
                 reader = csv.DictReader(csv_file)
                 for row in reader:
                     if id == row["CanID"]:

@@ -1,8 +1,5 @@
 from random import randint
-import nixnet
-from nixnet import system
-from nixnet import constants
-from canbus import Frame
+from canbus import Frame, CanBus
 import time
 
 
@@ -12,30 +9,10 @@ def control_loop(enqueue_ui_event, control_queue):
     """
     last_time = time()
     # Get CAN interface
-    can_interfaces = system.System().intf_refs_can
-    can_list = [can_interface for can_interface in can_interfaces]
-
-    if not can_list:
-        raise Exception("No CAN interfaces found")
-    
-    can_interface = can_list[0]
-    print(can_interface)
-
-    can_database = 'Current_Database'
-    can_cluster = ':memory:'
-    with nixnet.FrameInStreamSession(str(can_interface), str(can_database), str(can_cluster)) as input_session:
-        input_session.intf.can_term = constants.CanTerm.OFF
-        input_session.intf.baud_rate = 250000
-        input_session.intf.can_fd_baud_rate = 250000
-
-        input_session.start()
-
+    canbus = CanBus()
+    canbus.start()
     while True:
-        frames = input_session.frames.read(10000, constants.TIMEOUT_NONE)
-        for frame in frames:
-            print(Frame.get_timestamp(frame))
-            print(Frame.sort_by_id(frame))
-
+        canbus.read()
         ############################################
         # EXAMPLE
 
@@ -65,35 +42,7 @@ def control_loop(enqueue_ui_event, control_queue):
 
 # Following exclusively for Cece debugging 
 if __name__ == "__main__":
-    can_interfaces = system.System().intf_refs_can
-
-    # 56789101112131415161718192021222324251234
-
-
-
-
-    can_list = [can_interface for can_interface in can_interfaces]
-
-    if not can_list:
-        raise Exception("No CAN interfaces found")
-
-    can_interface = can_list[0]
-    print(can_interface)
-
-    can_database = 'Current_Database'
-    can_cluster = ':memory:'
-    with nixnet.FrameInStreamSession(str(can_interface), str(can_database), str(can_cluster)) as input_session:
-        input_session.intf.can_term = constants.CanTerm.OFF
-        input_session.intf.baud_rate = 250000
-        input_session.intf.can_fd_baud_rate = 250000
-
-        input_session.start()
-
-        for i in range(0, 10):
-            frames = input_session.frames.read(10000, constants.TIMEOUT_NONE)
-            for frame in frames:
-                frame = Frame(frame.timestamp, frame.identifier, frame.payload)
-                print(frame.identifier)
-                print(frame.get_can_id())
-                print(frame.sort_by_id())
-            time.sleep(0.5)
+    canbus = CanBus()
+    canbus.start()
+    while True:
+        canbus.read()
