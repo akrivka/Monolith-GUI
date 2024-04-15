@@ -13,7 +13,6 @@ def control_loop(enqueue_ui_event, control_queue):
     canbus.start()
     while True:
         msg = canbus.read()
-        print(msg)
         ############################################
         # EXAMPLE
 
