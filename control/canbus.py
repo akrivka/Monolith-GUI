@@ -19,6 +19,9 @@ import time
 FUEL_SWITCH_LOOKUP = {0: "FFSO", 1: "FFSC", 2: "FMSO", 3: "FMSC", 4: "FVSO", 5: "FVSC", 6: "FPSO", 7: "FPSC"}
 LOX_SWITCH_LOOKUP = {0: "OFSO", 1: "OFSC", 2: "OMSO", 3: "OMSC", 4: "OVSO", 5: "OVSC", 6: "OPSO", 7: "OPSC"}
 
+FUEL_SWITCH_STATUS = {'FFSO' : 0x0, 'FFSC': 0x0, 'FMSO': 0x0, 'FMSC': 0x0, 'FVSO': 0x0, 'FVSC': 0x0, 'FPSO': 0x0, 'FPSC': 0x0}
+LOX_SWITCH_STATUS = {'OFSO' : 0x0, 'OFSC': 0x0, 'OMSO': 0x0, 'OMSC': 0x0, 'OVSO': 0x0, 'OVSC': 0x0, 'OPSO': 0x0, 'OPSC': 0x0}
+
 # # Get CAN interface
 # can_interfaces = system.System().intf_refs_can
 
@@ -81,6 +84,27 @@ class CanBus:
             frame = Frame(frame.timestamp, frame.identifier, frame.payload)
             print(frame.get_timestamp())
             print(frame.sort_by_id())
+    
+    def send(self, valve, value):
+        nixnet.send(self.construct_message(valve, value))
+
+    def construct_message(self, valve, value):
+        id = nixnet.CanIdentifer(0x0)
+        payload = bytearray([0, 0, 0, 0, 0, 0, 0, 0])
+
+        if list(FUEL_SWITCH_LOOKUP.values()).contains(valve):
+            id = nixnet.CanIdentifier(0x1)
+            self.FUEL_SWITCH_STATUS[valve] = value
+            payload = bytearray(self.FUEL_SWITCH_STATUS)
+
+        if list(LOX_SWITCH_LOOKUP.values()).contains(valve):
+            id = nixnet.CanIdentifier(0x2)
+            self.LOX_SWITCH_STATUS[valve] = value
+            payload = bytearray(self.LOX_SWITCH_STATUS)
+        
+        message = nixnet.Message(identifier = id, data = payload)
+        return message
+
 
 class Frame:
     """Breaks down Canbus messages (frames) into readable data packets including
@@ -89,8 +113,6 @@ class Frame:
             3) Payload -- an 8-byte value 
         Returns theses processed values for use in GUI/Dashboard.
     """
-    FUEL_SWITCH_STATUS = {'FFSO' : 0x0, 'FFSC': 0x0, 'FMSO': 0x0, 'FMSC': 0x0, 'FVSO': 0x0, 'FVSC': 0x0, 'FPSO': 0x0, 'FPSC': 0x0}
-    LOX_SWITCH_STATUS = {'OFSO' : 0x0, 'OFSC': 0x0, 'OMSO': 0x0, 'OMSC': 0x0, 'OVSO': 0x0, 'OVSC': 0x0, 'OPSO': 0x0, 'OPSC': 0x0}
 
     def __init__(self, timestamp, identifier, payload):
         """Breaks down Canbus messages (frames) into readable data packets including
@@ -152,7 +174,7 @@ class Frame:
         """Given a frame, returns either valve statuses or a pressure, or a temperature.
 
             Example output: 
-            LOX Switches: {'OFSO': 'Closed', 'OFSC': 'Closed', 'OMSO': 'Closed', 'OMSC': 'Closed', 'OVSO': 'Closed', 'OVSC': 'Closed', 'OPSO': 'Closed', 'OPSC': 'Closed'}
+            LOX Switches: {'OFSO': 0, 'OFSC': 0, 'OMSO': 0, 'OMSC': 0, 'OVSO': 0, 'OVSC': 0, 'OPSO': 0, 'OPSC': 0}
             0 --> a voltage or temperature
         """
         id = self.get_can_id()
@@ -165,9 +187,9 @@ class Frame:
             switch_dictionary = {}
             for i in range(len(byte_list)):
                 if byte_list[i] == 0:
-                    switch_dictionary[FUEL_SWITCH_LOOKUP[i]] = "Closed"
+                    switch_dictionary[FUEL_SWITCH_LOOKUP[i]] = 0
                 else:
-                    switch_dictionary[FUEL_SWITCH_LOOKUP[i]] = "Open"
+                    switch_dictionary[FUEL_SWITCH_LOOKUP[i]] = 1
             return message + str(switch_dictionary)
         
         if id == "0x2":   # Returns open oxygen valves
@@ -175,9 +197,9 @@ class Frame:
             switch_dictionary = {}
             for i in range(len(byte_list)):
                 if byte_list[i] == 0:
-                    switch_dictionary[LOX_SWITCH_LOOKUP[i]] = "Closed"
+                    switch_dictionary[LOX_SWITCH_LOOKUP[i]] = 0
                 else:
-                    switch_dictionary[LOX_SWITCH_LOOKUP[i]] = "Open"
+                    switch_dictionary[LOX_SWITCH_LOOKUP[i]] = 1
             return message + str(switch_dictionary)
         
         else: 
@@ -192,18 +214,10 @@ class Frame:
                         return pressure
                     else:
                         return voltage
-    
-    def construct_message(self, fuel, open, valve):
-        changed_position = None
-        if open:
-            changed_position = 0x1
-        if not open:
-            changed_position = 0x0
-        if fuel:
-            id = nixnet.CanIdentifier(0x1)
 
-        if not fuel:
-            id = nixnet.CanIdentifier(0x2)
+        
+        
+
 
         
 
