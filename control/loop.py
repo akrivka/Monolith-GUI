@@ -1,44 +1,50 @@
 from random import randint
-from control.canbus_stub import Frame, CanBus
+from control.canbus import Frame, CanBus
 from time import time
 
 
-def control_loop(enqueue_ui_event, control_queue):
+def control_loop(display, ui_command_queue):
     """
-    This is the control loop for the monolith project.
+    This is the control loop for the Monolith project.
     """
-    last_time = time()
-    # Get CAN interface
+
+    # Initialize CanBus interface
     canbus = CanBus()
     canbus.start()
+
+    # Main loop
     while True:
-        msg = canbus.read()
-        ############################################
-        # EXAMPLE
+        # Read CAN message 
+        #   - these come from the test stand
+        #   - the CanBus class handles logging and parsing
+        can_msg = canbus.read()
+        if can_msg:
+            # Handle CAN message
+            # TODO: Implement CAN message handling 
+            #       To send an update to the UI, you can just do 
+            #       display(can_msg). The UI will handle the rest.
+            #       Example:
+            #           if isinstance(can_msg, PressureReading):
+            #               display(can_msg)
+            #           elif ...
+            pass
 
-        # Check for control messages (these come from the UI)
-        if not control_queue.empty():
-            msg = control_queue.get()
+        # Read UI command
+        # (these come from someone clicking a button in the UI)
+        if not ui_command_queue.empty():
+            ui_msg = ui_command_queue.get()
 
-            # handle messgae (e.g. open or close valve)
-
-            # send update back to UI
-            enqueue_ui_event(msg)
-
-        # Sending dummy data to UI for pres and temp sensors
-        if time() - last_time > 0.1:
-            last_time = time()
-            # generate random number from 0 to 100
-            enqueue_ui_event(
-                [
-                    ("pres-FE", randint(1, 100), last_time),
-                    ("temp-FE", randint(1, 25), last_time),
-                    ("pres-OE", randint(1, 100), last_time),
-                    ("temp-OE", randint(1, 25), last_time),
-                ]
-            )
-
-        ############################################
+            # Handle UI command
+            # TODO: Implement UI command handling
+            #       To send a CAN message, you can just do
+            #       canbus.send(valve, value). The CanBus class will #
+            #       handle the rest.
+            #       Example:
+            #           if isinstance(ui_msg, ValveOpen):
+            #               canbus.send(ui_msg)
+            #           elif ...
+            pass
+            
 
 # Following exclusively for Cece debugging 
 if __name__ == "__main__":
