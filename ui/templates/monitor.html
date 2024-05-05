@@ -1,5 +1,95 @@
-{% extends "base.html" %}
-{% block content %}
-    <h1>MONOLITH</h1>
-    <canvas id="graph" />
-{% endblock content %}
+{% extends "base.html" %} {% block body %}
+<script src="assets/chartjs/dist/chart.umd.js"></script>
+
+<h1>MONOLITH</h1>
+
+{# ############# MACROS ############## #} 
+{% macro graph(id) %}
+<div>
+    <canvas id="{{ id }}" width="400" height="150"></canvas>
+</div>
+{% endmacro %} 
+
+{# ############# GRAPH ############## #} 
+
+<div class="charts">
+    {{ graph("FPP") }} 
+    {{ graph("FTP") }} 
+    {{ graph("OPP") }} 
+    {{ graph("OTP") }} 
+    {{ graph("OTT") }} 
+    {{ graph("FTT") }} 
+</div>
+
+{############## JAVASCRIPT ############## #}
+<script>
+  // CONFIGURATION
+  const MAX_LENGTH = 100;
+  const TIME_WINDOW = 2; // seconds
+  const XTICKS = 10;
+  const YTICKS = 5;
+
+  const initGraph = (id, color) => {
+    return new Chart(document.getElementById(id), {
+      type: "line",
+      data: {
+        labels: [],
+        datasets: [
+          {
+            label: id,
+            data: [],
+            borderColor: color,
+            fill: false,
+          },
+        ],
+      },
+    });
+  };
+
+  const charts = {
+    FPP: initGraph("FPP", "red"),
+    FTP: initGraph("FTP", "red"),
+    OPP: initGraph("OPP", "blue"),
+    OTP: initGraph("OTP", "blue"),
+    OTT: initGraph("OTT", "blue"),
+    FTT: initGraph("FTT", "red"),
+  };
+
+  // helper function
+  function addData(chart, label, newData) {
+    console.log(chart.data.datasets[0].data[chart.data.datasets[0].data.length - 1], chart.data.labels[chart.data.labels.length - 1])
+    chart.data.labels.push(label);
+    chart.data.datasets.forEach((dataset) => {
+      dataset.data.push(newData);
+    });
+
+    // Remove old data
+    if (chart.data.labels.length > MAX_LENGTH) {
+      chart.data.labels.shift();
+      chart.data.labels = chart.data.labels.slice();
+      chart.data.datasets.forEach((dataset) => {
+        dataset.data.shift();
+        dataset.data = dataset.data.slice();
+      });
+    }
+    
+    chart.update();
+  }
+
+  // Subscribe to the server-sent events
+  const eventSource = new EventSource("/monitor-stream");
+  eventSource.onmessage = (msg) => {
+    // Parse comma separated values
+    const [type, id, value, timestamp] = msg.data.split(",");
+
+    if (charts[id] === undefined) {
+      console.error("Unknown ID: " + id);
+      return;
+    }
+
+    // Update graph
+    addData(charts[id], Math.round(timestamp * 10) / 10, value);
+  };
+</script>
+
+{% endblock body %}

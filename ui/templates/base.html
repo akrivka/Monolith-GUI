@@ -7,16 +7,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
 
     <link href="/assets/styles.css" rel="stylesheet" />
-    <link
-      href="/assets/favicon.svg"
-      rel="icon"
-      type="image/svg+xml"
-    />
+
+    {% block head %}{% endblock %}
 
     <title>Monolith</title>
   </head>
 
   <body>
-    {% block content %}{% endblock %}
+    {% block body %}{% endblock %}
   </body>
 </html>

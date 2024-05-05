@@ -1,0 +1,3 @@
+{# 20x20 #}
+<rect width="20" height="20"></rect>
+<circle cx="10" cy="10" r="10"></circle>

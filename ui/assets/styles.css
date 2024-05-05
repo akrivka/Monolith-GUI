@@ -1,5 +1,6 @@
 body {
     background-color: #0f0f0f;
+	color: white;
     max-width: 1024px;
 	margin: 0 auto;
 	display: flex;
@@ -11,4 +12,9 @@ body {
 
 h1 {
     color: #ff6c0a;color: #ff6c0a;
+}
+
+.charts {
+	display: grid;
+	grid-template-columns: auto auto;
 }
