@@ -3,22 +3,52 @@
 {% block body %}
 
 <h1>MONOLITH P&ID</h1>
-<div style="display: flex;">
+<div style="display: flex; width: 100%;">
     {# ############# SEQUENCES ############## #}
-    <div id="left-panel" style="flex: 1 1 15%;">
-        maybe some UI controls here (toggling object labels and manual control button)
+    <div id="left-panel" style="width: 10%;">
+        UI settings
+        <div style="font-size: 10pt;">
+            <input type="checkbox" id="show_names" name="show_names" checked>
+            <label for="show_names">Show names</label><br>
+            <input type="checkbox" id="show_buttons" name="show_buttons" checked>
+            <label for="show_buttons">Show buttons</label><br>
+        </div>
     </div>
     
-    <div id="diagram" style="flex: 1 0 70%;">
+    <div id="diagram" style="width: 80%; display: flex;   flex-direction:
+    column; align-items: center;">
         {% include "pid_diagram.html" %}
     </div>
 
-    <div id="right-panel" style="flex: 1 1 15%;">
+    <div id="right-panel" style="width: 10%;">
         <button onclick="fetch('/start-sequence/1')">SEQUENCE 1</button>
     </div>
 </div>
-{# ############# EVENT PARSING ############## #}
+
 <script>
+    // UI SETTINGS
+    const show_names = document.getElementById("show_names");
+    const show_buttons = document.getElementById("show_buttons");
+
+    show_names.addEventListener("change", () => {
+        const names = document.querySelectorAll(".name");
+        names.forEach(name => {
+            name.style.visibility = show_names.checked ? "visible" : "hidden";
+        });
+    });
+
+    show_buttons.addEventListener("change", () => {
+        const buttons = document.querySelectorAll(".button");
+        buttons.forEach(button => {
+            button.style.visibility = show_buttons.checked ? "visible" : "hidden";
+        });
+    });
+
+    // EVENT PARSING
+    // Constants
+    const VALVE_CLOSED_ANGLE_THRESHOLD = 85;
+    const VALVE_OPEN_ANGLE_THRESHOLD = 5;
+
     // Subscribe to the server-sent events
     const eventSource = new EventSource("/pid-stream");
     eventSource.onmessage = (msg) => {
@@ -31,13 +61,33 @@
             return;
         }
         // Ball valve
-        if (id.endsWith("BV")) {
+        if (type === "valve") {
             const valve_icon = element.querySelector(".valve-icon");
-            // TODO: handle angle parsing
+            const bg_box = element.querySelector(".box");
+            const value_element = element.querySelector(".value");
+            if (value < VALVE_OPEN_ANGLE_THRESHOLD) {
+                // Valve is open
+                element.setAttribute("fill", "white");
+                element.setAttribute("stroke", "white");
+                bg_box.setAttribute("fill", "none");
+                value_element.textContent = "";
+            } if (value > VALVE_CLOSED_ANGLE_THRESHOLD) {
+                // Valve is closed
+                element.setAttribute("fill", "none");
+                element.setAttribute("stroke", "gray");
+                bg_box.setAttribute("fill", "none");
+                value_element.textContent = "";
+            } else {
+                // Valve is in between
+                element.setAttribute("fill", "#11111166");
+                element.setAttribute("stroke", "#11111166");
+                bg_box.setAttribute("fill", "#cc0000");
+                value_element.textContent = value + "°";
+            }
             return;
         }
         // Pressure or temperature sensor
-        if (id.endsWith("P") || id.endsWith("T")) {
+        if (valve == "pres" || valve == "temp") {
             const value_element = element.querySelector(".value");
             value_element.textContent = value;
             return;

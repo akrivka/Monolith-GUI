@@ -35,13 +35,13 @@ def create_server(send_command, ui_announcer):
     @app.route("/valve-open/<valve_id>", methods=["GET"])
     def open_valve(valve_id):
         """Request to open valve valve_id"""
-        send_command(ValveClose(valve_id))
+        send_command(ValveOpen(valve_id))
         return {}, 200
 
     @app.route("/valve-close/<valve_id>", methods=["GET"])
     def close_valve(valve_id):
         """Request to close valve valve_id"""
-        send_command(ValveOpen(valve_id))
+        send_command(ValveClose(valve_id))
         return {}, 200
 
     @app.route("/monitor")
