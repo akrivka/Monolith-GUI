@@ -9,6 +9,27 @@ import nixnet
 from nixnet import system
 from nixnet import constants
 
+# LOAD CAN_ID_MAPPING
+CAN_ID_MAPPING = {}
+CAN_ID_MAPPING_INVERSE = {}
+with open("control/can_id_mapping.csv", mode="r") as can_id_mapping_csv:
+    reader = csv.reader(can_id_mapping_csv)
+    next(reader, None) # Skip header row
+    for _can_id, classname, object_id in reader:
+        # Skip emtpy rows
+        if classname == "":
+            continue
+
+        # Convert can_id 
+        can_id = int(_can_id, 16)
+
+        # Save in mappings...
+        CAN_ID_MAPPING[can_id] = (
+            getattr(sys.modules["control.messages"], classname),
+            object_id,
+        )
+        CAN_ID_MAPPING_INVERSE[(classname, object_id)] = can_id
+
 
 class CanBus:
     """ """
@@ -33,17 +54,6 @@ class CanBus:
         self.input_session.intf.baud_rate = 250000
         self.input_session.intf.can_fd_baud_rate = 250000
 
-        # Load can_id to Python class mappings
-        self.can_id_mapping = {}
-        with open("control/can_id_mapping.csv", mode="r") as can_id_mapping_csv:
-            reader = csv.reader(can_id_mapping_csv)
-            next(reader, None)
-            for can_id, target_class, object_id in reader:
-                self.can_id_mapping[int(can_id)] = [
-                    getattr(sys.modules[__name__], target_class),
-                    object_id,
-                ]
-
     def start(self):
         # Start CanBus session
         self.input_session.start()
@@ -58,20 +68,17 @@ class CanBus:
         # Return each one one by one to the control loop, instantied as 
         # a Python class defined by us
         for frame in frames:
-            target_class, object_id = self.can_id_mapping[int(frame.identifier)]
-            yield target_class(
-                object_id, list(frame.payload), int(frame.identifier), frame.timestamp
-            )
+            if int(frame.identifier) in CAN_ID_MAPPING:
+                message_class, object_id = CAN_ID_MAPPING[int(frame.identifier)]
+                yield message_class(object_id, list(frame.payload), int(frame.identifier), frame.timestamp)
 
     def send(self, msg):
         # Look up can_id based on msg.__classname__ and msg.object_id
-        # TODO
+        can_id = CAN_ID_MAPPING_INVERSE[(msg.__classname__, msg.object_id)]
 
-        # Construct payload using get_payload()
-        # TODO
-
-        # Init nixnet message
-        can_msg = nixnet.Message(identifier=id, data=[])
+        # Init nixnet message. Construct payload using get_payload().
+        can_msg = nixnet.Message(identifier=can_id, data=bytearray(msg.get_payload()))
+        print(can_msg)
 
         # Send it...
         nixnet.send(can_msg)

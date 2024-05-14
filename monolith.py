@@ -13,6 +13,7 @@ ui_queue = Queue()
 
 def send_command(msg):
     try:
+        print(msg)
         control_queue.put(msg)
     except Queue.full:
         print("Control queue is full, UI process probably dead")

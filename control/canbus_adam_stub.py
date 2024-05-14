@@ -3,7 +3,7 @@
 # """
 
 import sys
-import time
+import timepy
 import csv
 import random
 

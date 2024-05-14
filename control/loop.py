@@ -1,6 +1,8 @@
 from random import randint
-from control.canbus_adam_stub import CanBus, CAN_ID_MAPPING
+# from control.canbus_adam_stub import CanBus, CAN_ID_MAPPING
+from control.canbus_adam import CanBus, CAN_ID_MAPPING
 from time import time
+import control.messages
 
 def control_loop(display, ui_command_queue):
     """
@@ -31,7 +33,12 @@ def control_loop(display, ui_command_queue):
         # Read UI command
         # (these come from someone clicking a button in the UI)
         if not ui_command_queue.empty():
+            print("before .get()")
             ui_command = ui_command_queue.get()
+            print(f"ui command {ui_command}")
+
+            if isinstance(ui_command, control.messages.ValveOpen) or isinstance(ui_command, control.messages.ValveClose):
+                canbus.send(ui_command)
 
             # Handle UI command
             # TODO: Implement UI command handling
@@ -42,7 +49,7 @@ def control_loop(display, ui_command_queue):
             #           if isinstance(ui_msg, ValveOpen):
             #               canbus.send(ui_msg)
             #           elif ...
-            pass
+            # pass
 
         # TODO: Sequence execution (check whether a new event should happen)
         #       (Infrastructure not set up for this yet.)

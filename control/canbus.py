@@ -6,7 +6,6 @@ import nixnet
 from nixnet import system
 from nixnet import constants
 from time import sleep
-from can import Message
 import csv
 # import tomli
 # import nixnet
