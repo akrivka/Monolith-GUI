@@ -4,10 +4,17 @@ from control.canbus_adam import CanBus, CAN_ID_MAPPING
 from time import time
 import control.messages
 
-def control_loop(display, ui_command_queue):
+def control_loop(ui_queue, control_queue):
     """
     This is the control loop for the Monolith project.
     """
+
+    def display(msg):
+        try:
+            ui_queue.put(msg)
+        except:
+            print("UI queue is full, control process probably dead")
+
 
     # Initialize CanBus interface
     canbus = CanBus()
@@ -32,9 +39,9 @@ def control_loop(display, ui_command_queue):
 
         # Read UI command
         # (these come from someone clicking a button in the UI)
-        if not ui_command_queue.empty():
+        if not control_queue.empty():
             print("before .get()")
-            ui_command = ui_command_queue.get()
+            ui_command = control_queue.get()
             print(f"ui command {ui_command}")
 
             if isinstance(ui_command, control.messages.ValveOpen) or isinstance(ui_command, control.messages.ValveClose):

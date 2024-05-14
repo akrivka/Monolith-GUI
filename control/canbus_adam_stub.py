@@ -3,9 +3,9 @@
 # """
 
 import sys
-import timepy
 import csv
 import random
+import time
 
 # LOAD CAN_ID_MAPPING
 CAN_ID_MAPPING = {}

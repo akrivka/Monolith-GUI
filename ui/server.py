@@ -3,6 +3,7 @@ from flask import Flask, Response, request, render_template, send_from_directory
 from ui.sse import MessageAnnouncer
 import time
 import threading
+from multiprocessing import Queue
 
 
 ##############################
@@ -105,8 +106,16 @@ def ui_loop(ui_queue, announcer):
 
 
 # Start server
-def start_server(send_command, ui_queue):
+def start_server(control_queue, ui_queue):
     """TODOC"""
+
+    def send_command(msg):
+        try:
+            print(msg)
+            control_queue.put(msg)
+        except Queue.full:
+            print("Control queue is full, UI process probably dead")
+
     announcer = MessageAnnouncer()
     app = create_server(send_command, announcer)
     app.debug = False
