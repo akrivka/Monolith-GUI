@@ -4,21 +4,21 @@ from control.messages import ValveOpen, ValveClose
 def seq_OPEN_VALVE(designator):
     """Open"""
     return lambda t: [
-        ValveOpen(designator, t),
-        ValveOpen(designator, t + 50),
-        ValveOpen(designator, t + 100),
-        ValveOpen(designator, t + 150),
-        ValveOpen(designator, t + 200)
+        ValveOpen(t, designator),
+        ValveOpen(t + 50, designator),
+        ValveOpen(t + 100, designator),
+        ValveOpen(t + 150, designator),
+        ValveOpen(t + 200, designator)
     ]
 
 def seq_CLOSE_VALVE(designator):
     """Close"""
     return lambda t: [
-        ValveClose(designator, t),
-        ValveClose(designator, t + 50),
-        ValveClose(designator, t + 100),
-        ValveClose(designator, t + 150),
-        ValveClose(designator, t + 200)
+        ValveClose(t, designator),
+        ValveClose(t + 50, designator),
+        ValveClose(t + 100, designator),
+        ValveClose(t + 150, designator),
+        ValveClose(t + 200, designator)
     ]
 
 

@@ -68,7 +68,7 @@ class InternalMessage(Message):
 
 class ValveOpen(CanMessageOut):
     def __init__(self, target_timestamp, designator):
-        super().__init__(0, target_timestamp, designator)
+        super().__init__(target_timestamp, designator)
     
     def get_payload(self):
         return [0,0,0,0,0,0,0,0]
@@ -76,7 +76,7 @@ class ValveOpen(CanMessageOut):
 
 class ValveClose(CanMessageOut):
     def __init__(self, target_timestamp, designator):
-        super().__init__(0, target_timestamp, designator)
+        super().__init__(target_timestamp, designator)
     
     def get_payload(self):
         return [0,0,0,0,0,0,0,0]
@@ -150,6 +150,11 @@ class ObjectFailure(InternalMessage):
         return f"object_failure,{self.designator}"
     
 class StartSequence(InternalMessage):
-    def __init__(self, sequence):
+    def __init__(self, seq_tuple):
         super().__init__()
-        self.sequence = sequence
+        self.seq_tuple = seq_tuple
+    
+    def instantiate(self, start_time):
+        (seq_fn, args) = self.seq_tuple
+        return seq_fn(*args)(start_time)
+            

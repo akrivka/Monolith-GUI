@@ -21,7 +21,7 @@ def control_loop(ui_queue, control_queue):
     canbus.start()
 
     # Initialize outgoing can message buffer (priority queue)
-    out_buffer = heapq.heapify([])
+    out_buffer = []
 
     # Main loop
     while True:
@@ -34,7 +34,7 @@ def control_loop(ui_queue, control_queue):
 
             # Otherwise just let the UI handle the CAN message (make UI update)
             display(can_msg)
-            
+
         # TODO: Check for device failures. 
         #       Check whether we've stopped receiving some message 
         #       and if so send a failure message to the UI
@@ -46,7 +46,7 @@ def control_loop(ui_queue, control_queue):
 
             if isinstance(event, control.messages.StartSequence):
                 start_time = time()
-                for can_msg in event.sequence(start_time):
+                for can_msg in event.instantiate(start_time):
                     heapq.heappush(out_buffer, (can_msg.target_timestamp, can_msg))                
         
         # Send scheduled CAN messages

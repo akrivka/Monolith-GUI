@@ -37,13 +37,13 @@ def create_server(send_command, ui_announcer):
     @app.route("/valve-open/<designator>", methods=["GET"])
     def open_valve(designator):
         """Request to open valve designator"""
-        send_command(StartSequence(seq_OPEN_VALVE(designator)))
+        send_command(StartSequence((seq_OPEN_VALVE, [designator])))
         return {}, 200
 
     @app.route("/valve-close/<designator>", methods=["GET"])
     def close_valve(designator):
         """Request to close valve designator"""
-        send_command(StartSequence(seq_CLOSE_VALVE(designator)))
+        send_command(StartSequence((seq_CLOSE_VALVE, [designator])))
         return {}, 200
 
     @app.route("/monitor")
