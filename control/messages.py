@@ -63,7 +63,7 @@ class ValveOpen(CanMessage):
     def __init__(self, valve_id):
         self.valve_id = valve_id
     
-    def get_payload():
+    def get_payload(self):
         return [0,0,0,0,0,0,0,0]
 
 
@@ -71,7 +71,7 @@ class ValveClose(CanMessage):
     def __init__(self, valve_id):
         self.valve_id = valve_id
     
-    def get_payload():
+    def get_payload(self):
         return [0,0,0,0,0,0,0,0]
 
 
