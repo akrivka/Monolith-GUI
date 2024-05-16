@@ -15,7 +15,7 @@ CAN_ID_MAPPING_INVERSE = {}
 with open("control/can_id_mapping.csv", mode="r") as can_id_mapping_csv:
     reader = csv.reader(can_id_mapping_csv)
     next(reader, None) # Skip header row
-    for _can_id, classname, object_id in reader:
+    for _can_id, classname, designator in reader:
         # Skip emtpy rows
         if classname == "":
             continue
@@ -26,9 +26,9 @@ with open("control/can_id_mapping.csv", mode="r") as can_id_mapping_csv:
         # Save in mappings...
         CAN_ID_MAPPING[can_id] = (
             getattr(sys.modules["control.messages"], classname),
-            object_id,
+            designator,
         )
-        CAN_ID_MAPPING_INVERSE[(classname, object_id)] = can_id
+        CAN_ID_MAPPING_INVERSE[(classname, designator)] = can_id
 
 
 class CanBus:
@@ -74,25 +74,19 @@ class CanBus:
         # Return each one one by one to the control loop, instantied as 
         # a Python class defined by us
         for frame in frames:
-            if int(frame.identifier) == 163:
-                print(frame)
             if int(frame.identifier) in CAN_ID_MAPPING:
-                message_class, object_id = CAN_ID_MAPPING[int(frame.identifier)]
-                yield message_class(object_id, list(frame.payload), int(frame.identifier), frame.timestamp)
+                message_class, designator = CAN_ID_MAPPING[int(frame.identifier)]
+                yield message_class(designator, list(frame.payload), int(frame.identifier), frame.timestamp)
 
     def send(self, msg):
-        # Look up can_id based on msg.__classname__ and msg.object_id
-        can_id = CAN_ID_MAPPING_INVERSE[(type(msg).__name__, msg.valve_id)]
+        # Look up can_id based on msg.__classname__ and msg.designator
+        can_id = CAN_ID_MAPPING_INVERSE[(type(msg).__name__, msg.designator)]
 
-        # Init nixnet message. Construct payload using get_payload().
-        # can_msg = can.Message(arbitration_id=can_id, data=bytearray(msg.get_payload()))
-        # print(can_msg)
-
-        # Send it...
+        # Create a CAN Frame
         frame = types.CanFrame(types.CanIdentifier(can_id), constants.FrameType.CAN_DATA, bytearray(msg.get_payload()))
-        i = 0
-        while i < 5:
-            self.output_session.frames.write([frame])
+
+        # Send the frame (through the nixnet output session)
+        self.output_session.frames.write([frame])
+
+        if __debug__:
             print(f"sent messsage {frame}")
-            time.sleep(0.05)
-            i += 1

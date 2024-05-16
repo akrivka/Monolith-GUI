@@ -8,7 +8,7 @@ PT_CALIBRATION = {}
 with open("control/PT_Master.csv", "r") as file:
     reader = csv.DictReader(file)
     for row in reader:
-        obj_id = row["OBJECT_ID"]
+        obj_id = row["designator"]
         obj_info = {"P_Low": int(row["P_Low"]), "P_High": int(row["P_High"]), "V_High": int(row["V_High"]), "V_Low": int(row["V_Low"])}
         PT_CALIBRATION[obj_id] = obj_info
 
@@ -18,11 +18,11 @@ def byte_array_to_int(byte_array):
 def byte_array_to_high_low(byte_array):
     return byte_array[0] * byte_array[1] * 0xFF
 
-def voltage_to_pressure(object_id, voltage):
-    ph = PT_CALIBRATION[object_id]["P_High"]
-    pl = PT_CALIBRATION[object_id]["P_Low"]
-    vh = PT_CALIBRATION[object_id]["V_High"]
-    vl = PT_CALIBRATION[object_id]["V_Low"]
+def voltage_to_pressure(designator, voltage):
+    ph = PT_CALIBRATION[designator]["P_High"]
+    pl = PT_CALIBRATION[designator]["P_Low"]
+    vh = PT_CALIBRATION[designator]["V_High"]
+    vl = PT_CALIBRATION[designator]["V_Low"]
     m = (ph - pl)/(vh - vl)
     b = m * vl - pl
     return m * voltage + b
@@ -36,70 +36,75 @@ def voltage_to_angle(voltage):
 class Message:
     """Top-level message class"""
     def __init__(self):
-        self.timestamp = time.time()
+        self.created_timestamp = time.time()
 
 
 # CAN MESSAGES
-class CanMessage(Message):
+class CanMessageIn(Message):
     """
-    Second-level subclass saying this is a message that gets
-    sent over the CanBus
+    TODOC
     """
-    def __init__(self, can_id, can_timestamp):
+    def __init__(self, can_id, can_timestamp, designator):
         super().__init__()
         self.can_id = can_id
         self.can_timestamp = can_timestamp
+        self.designator = designator
 
+class CanMessageOut(Message):
+    """
+    TODOC
+    """
+    def __init__(self, target_timestamp, designator):
+        super().__init__()
+        self.target_timestamp = target_timestamp
+        self.designator = designator
 
 class InternalMessage(Message):
     """
-    Second-level subclass saying that this is a message only 
-    sent internally within the Python application
+    TODOC
     """
     def __init__(self):
         super().__init__()
 
-class ValveOpen(CanMessage):
-    def __init__(self, valve_id):
-        self.valve_id = valve_id
+class ValveOpen(CanMessageOut):
+    def __init__(self, target_timestamp, designator):
+        super().__init__(0, target_timestamp, designator)
     
     def get_payload(self):
         return [0,0,0,0,0,0,0,0]
 
 
-class ValveClose(CanMessage):
-    def __init__(self, valve_id):
-        self.valve_id = valve_id
+class ValveClose(CanMessageOut):
+    def __init__(self, target_timestamp, designator):
+        super().__init__(0, target_timestamp, designator)
     
     def get_payload(self):
         return [0,0,0,0,0,0,0,0]
 
 
-class PressureReading(CanMessage):
+class PressureReading(CanMessageIn):
     TIMEOUT = 100 # ms
 
-    def __init__(self, object_id, payload, can_id, can_timestamp):
-        super().__init__(can_id, can_timestamp)
-        self.object_id = object_id
+    def __init__(self, designator, payload, can_id, can_timestamp):
+        super().__init__(can_id, can_timestamp, designator)
 
         # TODO @Cece: needs to be implement proper voltage convertsion
         # self.pressure = byte_array_to_int(payload)
-        # assuming the things mentioned above, like can_id > object_id and pt_master is in the filepath used to run
-        self.pressure = voltage_to_pressure(object_id, byte_array_to_high_low(payload))
+        # assuming the things mentioned above, like can_id > designator and pt_master is in the filepath used to run
+        self.pressure = voltage_to_pressure(designator, byte_array_to_high_low(payload))
 
         last_timestamp = self.timestamp
 
     def format(self, timestamp_offset=0.0):
         return (
-            f"pres,{self.object_id},{self.pressure},{self.timestamp + timestamp_offset}"
+            f"pres,{self.designator},{self.pressure},{self.timestamp + timestamp_offset}"
         )
 
-class ThermoReading(CanMessage):
+class ThermoReading(CanMessageIn):
     TIMEOUT = 100 # ms
 
-    def __init__(self, object_id, payload, can_id, can_timestamp):
-        super().__init__(can_id, can_timestamp)
-        self.object_id = object_id
+    def __init__(self, designator, payload, can_id, can_timestamp):
+        super().__init__(can_id, can_timestamp, designator)
 
         # TODO @Cece: needs to be implement proper voltage convertsion
         # self.temperature = byte_array_to_int(payload)
@@ -117,14 +122,13 @@ class ThermoReading(CanMessage):
         last_timestamp = self.timestamp
 
     def format(self, timestamp_offset=0.0):
-        return f"temp,{self.object_id},{self.temperature},{self.timestamp + timestamp_offset}"
+        return f"temp,{self.designator},{self.temperature},{self.timestamp + timestamp_offset}"
 
-class ValvePosition(CanMessage):
+class ValvePosition(CanMessageIn):
     TIMEOUT = 1000 # ms
 
-    def __init__(self, object_id, payload, can_id, can_timestamp):
-        super().__init__(can_id, can_timestamp)
-        self.object_id = object_id
+    def __init__(self, designator, payload, can_id, can_timestamp):
+        super().__init__(can_id, can_timestamp, designator)
 
         # TODO @Cece: needs to be implement proper voltage convertsion
         # self.angle = byte_array_to_int(payload)
@@ -134,13 +138,18 @@ class ValvePosition(CanMessage):
 
     def format(self, timestamp_offset=0.0):
         return (
-            f"valve,{self.object_id},{self.angle},{self.timestamp + timestamp_offset}"
+            f"valve,{self.designator},{self.angle},{self.timestamp + timestamp_offset}"
         )
 
 class ObjectFailure(InternalMessage):
-    def __init__(self, object_id):
+    def __init__(self, designator):
         super.__init__()
-        self.object_id = object_id
+        self.designator = designator
     
     def format(self):
-        return f"object_failure,{self.object_id}"
+        return f"object_failure,{self.designator}"
+    
+class StartSequence(InternalMessage):
+    def __init__(self, sequence):
+        super().__init__()
+        self.sequence = sequence

@@ -12,12 +12,12 @@ CAN_ID_MAPPING = {}
 with open("control/can_id_mapping.csv", mode="r") as can_id_mapping_csv:
     reader = csv.reader(can_id_mapping_csv)
     next(reader, None)
-    for can_id, classname, object_id in reader:
+    for can_id, classname, designator in reader:
         if classname == "":
             continue
         CAN_ID_MAPPING[int(can_id, 16)] = [
             getattr(sys.modules["control.messages"], classname),
-            object_id,
+            designator,
         ]
 
 
@@ -84,11 +84,11 @@ class CanBus:
         frames = self.get_random_messages()
         for frame in frames:
             if int(frame["identifier"]) in CAN_ID_MAPPING:
-                message_class, object_id = CAN_ID_MAPPING[int(frame["identifier"])]
-                yield message_class(object_id, list(frame["payload"]), int(frame["identifier"]), frame["timestamp"])
+                message_class, designator = CAN_ID_MAPPING[int(frame["identifier"])]
+                yield message_class(designator, list(frame["payload"]), int(frame["identifier"]), frame["timestamp"])
 
     def send(self, msg):
-        # Look up can_id based on msg.__classname__ and msg.object_id
+        # Look up can_id based on msg.__classname__ and msg.designator
         # TODO
 
         # Construct payload using get_payload()

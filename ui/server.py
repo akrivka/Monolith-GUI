@@ -1,4 +1,5 @@
-from control.messages import ValveClose, ValveOpen
+from control.messages import StartSequence, ValveClose, ValveOpen
+from control.sequences import seq_OPEN_VALVE, seq_CLOSE_VALVE
 from flask import Flask, Response, request, render_template, send_from_directory
 from ui.sse import MessageAnnouncer
 import time
@@ -33,17 +34,16 @@ def create_server(send_command, ui_announcer):
         """Interactive Piping and Instrumentation Diagram page"""
         return render_template("pid.html")
 
-    @app.route("/valve-open/<valve_id>", methods=["GET"])
-    def open_valve(valve_id):
-        """Request to open valve valve_id"""
-        send_command(ValveOpen(valve_id))
-        print("command sent from server: valve open")
+    @app.route("/valve-open/<designator>", methods=["GET"])
+    def open_valve(designator):
+        """Request to open valve designator"""
+        send_command(StartSequence(seq_OPEN_VALVE(designator)))
         return {}, 200
 
-    @app.route("/valve-close/<valve_id>", methods=["GET"])
-    def close_valve(valve_id):
-        """Request to close valve valve_id"""
-        send_command(ValveClose(valve_id))
+    @app.route("/valve-close/<designator>", methods=["GET"])
+    def close_valve(designator):
+        """Request to close valve designator"""
+        send_command(StartSequence(seq_CLOSE_VALVE(designator)))
         return {}, 200
 
     @app.route("/monitor")
@@ -111,7 +111,6 @@ def start_server(control_queue, ui_queue):
 
     def send_command(msg):
         try:
-            print(msg)
             control_queue.put(msg)
         except Queue.full:
             print("Control queue is full, UI process probably dead")
