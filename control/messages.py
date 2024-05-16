@@ -8,7 +8,7 @@ PT_CALIBRATION = {}
 with open("control/PT_Master.csv", "r") as file:
     reader = csv.DictReader(file)
     for row in reader:
-        obj_id = row["designator"]
+        obj_id = row["DESIGNATOR"]
         obj_info = {"P_Low": int(row["P_Low"]), "P_High": int(row["P_High"]), "V_High": int(row["V_High"]), "V_Low": int(row["V_Low"])}
         PT_CALIBRATION[obj_id] = obj_info
 
@@ -36,7 +36,7 @@ def voltage_to_angle(voltage):
 class Message:
     """Top-level message class"""
     def __init__(self):
-        self.created_timestamp = time.time()
+        self.timestamp = time.time()
 
 
 # CAN MESSAGES
