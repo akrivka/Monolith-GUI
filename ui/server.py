@@ -1,5 +1,5 @@
 from control.messages import StartSequence, ValveClose, ValveOpen
-from control.sequences import seq_OPEN_VALVE, seq_CLOSE_VALVE
+from control.sequences import seq_OPEN_VALVE, seq_CLOSE_VALVE, seq_TEST
 from flask import Flask, Response, request, render_template, send_from_directory
 from ui.sse import MessageAnnouncer
 from lib.util import time_ms
@@ -46,6 +46,16 @@ def create_server(send_command, ui_announcer):
         """Request to close valve designator"""
         send_command(StartSequence((seq_CLOSE_VALVE, [designator])))
         return {}, 200
+    
+    @app.route("/start-sequence/<name>", methods=["GET"])
+    def start_sequence(name):
+        """Start a custom sequence"""
+        sequence = seq_TEST if name == "test" else None
+        if (sequence):
+            send_command(StartSequence((sequence, [])))
+            return {}, 200
+        else:
+            return {}, 201
 
     @app.route("/monitor")
     def monitor():
