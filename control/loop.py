@@ -1,5 +1,5 @@
 # from control.canbus_adam_stub import CanBus, CAN_ID_MAPPING
-from control.canbus_adam import CanBus, CAN_ID_MAPPING
+from control.canbus import CanBus, CAN_ID_MAPPING
 from lib.util import time_ms
 import control.messages
 import heapq
