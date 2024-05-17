@@ -16,7 +16,7 @@ def byte_array_to_int(byte_array):
     return int.from_bytes(byte_array, byteorder="little")
 
 def byte_array_to_high_low(byte_array):
-    return byte_array[0] * byte_array[1] * 0xFF
+    return byte_array[0] + byte_array[1] * 0xFF
 
 def voltage_to_pressure(designator, voltage):
     ph = PT_CALIBRATION[designator]["P_High"]
