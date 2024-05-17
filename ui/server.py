@@ -2,9 +2,10 @@ from control.messages import StartSequence, ValveClose, ValveOpen
 from control.sequences import seq_OPEN_VALVE, seq_CLOSE_VALVE
 from flask import Flask, Response, request, render_template, send_from_directory
 from ui.sse import MessageAnnouncer
-import time
+from lib.util import time_ms
 import threading
 from multiprocessing import Queue
+from signal import signal, SIGINT
 
 
 ##############################
@@ -82,7 +83,7 @@ def create_server(send_command, ui_announcer):
 
         def handle_stream():
             # Send the current time to the client
-            start_time = time.time()
+            start_time = time_ms()
 
             messages = ui_announcer.listen()  # returns a queue.Queue
             while True:
@@ -105,9 +106,14 @@ def ui_loop(ui_queue, announcer):
         announcer.announce(msg)
 
 
+def handler(signalnum, frame):
+    raise TypeError
+
 # Start server
 def start_server(control_queue, ui_queue):
     """TODOC"""
+    # Install SIGINT handler so that Ctrl+C propagates to the parent 
+    signal(SIGINT, handler)
 
     def send_command(msg):
         try:

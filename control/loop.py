@@ -1,6 +1,6 @@
 # from control.canbus_adam_stub import CanBus, CAN_ID_MAPPING
 from control.canbus_adam import CanBus, CAN_ID_MAPPING
-from time import time
+from lib.util import time_ms
 import control.messages
 import heapq
 
@@ -45,11 +45,11 @@ def control_loop(ui_queue, control_queue):
             event = control_queue.get()
 
             if isinstance(event, control.messages.StartSequence):
-                start_time = time()
+                start_time = time_ms()
                 for can_msg in event.instantiate(start_time):
                     heapq.heappush(out_buffer, (can_msg.target_timestamp, can_msg))                
         
         # Send scheduled CAN messages
-        while out_buffer and out_buffer[0][0] < time():
+        while out_buffer and out_buffer[0][0] < time_ms():
             _, can_msg = heapq.heappop(out_buffer)
             canbus.send(can_msg)

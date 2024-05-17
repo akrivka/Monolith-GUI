@@ -1,4 +1,3 @@
-import time
 from control.messages import ValveOpen, ValveClose
 
 def seq_OPEN_VALVE(designator):
@@ -21,6 +20,16 @@ def seq_CLOSE_VALVE(designator):
         ValveClose(t + 200, designator)
     ]
 
+# def seq_TEST():
+#     """"""
+#     def f(start_time):
+#         VALVES = ["OVBV","OVBV","OMBV","OMBV","OPBV","OPBV","OFBV","OFBV","FVBV","FVBV","FMBV","FMBV","FPBV","FPBV","FFBV","FFBV"]
+#         t = 0
+#         sequence = []
+#         for valve in VALVES:
+
+            
+
 
 def seq_IGNITE():
     """
@@ -28,4 +37,3 @@ def seq_IGNITE():
     """
     return lambda t: []
     
-

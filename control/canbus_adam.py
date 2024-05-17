@@ -3,10 +3,9 @@
 # """
 
 import sys
-import time
+from lib.util import time_ms
 import csv
 import nixnet
-import can
 from nixnet import system, constants, types
 
 # LOAD CAN_ID_MAPPING

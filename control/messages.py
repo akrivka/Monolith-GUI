@@ -1,5 +1,5 @@
 import sys
-import time
+from lib.util import time_ms
 import csv
 
 
@@ -36,7 +36,7 @@ def voltage_to_angle(voltage):
 class Message:
     """Top-level message class"""
     def __init__(self):
-        self.timestamp = time.time()
+        self.timestamp = time_ms()
 
 
 # CAN MESSAGES
@@ -71,7 +71,7 @@ class ValveOpen(CanMessageOut):
         super().__init__(target_timestamp, designator)
     
     def get_payload(self):
-        return [0,0,0,0,0,0,0,0]
+        return [1,0,0,0,0,0,0,0]
 
 
 class ValveClose(CanMessageOut):
@@ -79,7 +79,7 @@ class ValveClose(CanMessageOut):
         super().__init__(target_timestamp, designator)
     
     def get_payload(self):
-        return [0,0,0,0,0,0,0,0]
+        return [1,0,0,0,0,0,0,0]
 
 
 class PressureReading(CanMessageIn):
@@ -105,9 +105,6 @@ class ThermoReading(CanMessageIn):
 
     def __init__(self, designator, payload, can_id, can_timestamp):
         super().__init__(can_id, can_timestamp, designator)
-
-        # TODO @Cece: needs to be implement proper voltage convertsion
-        # self.temperature = byte_array_to_int(payload)
 
         # if payload is byte_array, byte_array is low-high byte
         self.temperature = byte_array_to_high_low(payload)
