@@ -27,7 +27,7 @@
 {# ENGINE SYMBOL
    Anchor: top middle. #}
 {% macro engine(id, x, y) %}
-    <g id="{{ id }}" transform="translate({{ x - engine_width / 2 }}, {{ y }})">
+    <g id="{{ id }}" transform="translate({{ x - engine_width / 2 }}, {{ y }})" stroke="white" stroke-width="2" >
     {% include "icons/engine.svg" %}
     </g>
 {% endmacro %}
@@ -226,69 +226,62 @@
         fill="none"
         xmlns="http://www.w3.org/2000/svg">
 
-    {{ line("FMBV---ENGINE", FMBV_x, FMBV_y, ENGINE_x, ENGINE_y) }}
-    {{ line("OMBV---ENGINE", OMBV_x, OMBV_y, ENGINE_x, ENGINE_y) }}
+    <g fill="#ff3322">
+        {{ line("FMBV---ENGINE", FMBV_x, FMBV_y, ENGINE_x, ENGINE_y) }}
+        {{ line("FUELTANK---FMBV", FUELTANK_x, FUELTANK_y + tank_height / 2, FUELTANK_x, FMBV_y)}}
+        {{ line("FUELTANK---FMBV", FUELTANK_x, FMBV_y, FMBV_x, FMBV_y)}}
+        {{ line("FUELTANK---FFBV", FUELTANK_x, FUELTANK_y + tank_height / 2, FUELTANK_x, FFBV_y)}}
+        {{ line("FUELTANK---FFBV", FUELTANK_x, FFBV_y, FFBV_x, FFBV_y)}}
+        {{ line("FUELTANK---FVBV", FUELTANK_x, FUELTANK_y - tank_height / 2, FUELTANK_x, FVBV_y) }}
+        {{ line("FUELTANK---FVBV", FUELTANK_x, FVBV_y, FVBV_x, FVBV_y) }}
+        {{ line("FUELTANK---FPBV", FUELTANK_x, FUELTANK_y - tank_height / 2, FUELTANK_x, FPBV_y) }}
+        {{ line("FUELTANK---FPBV", FUELTANK_x, FPBV_y, FPBV_x, FPBV_y) }}
+        {{ line("FUELPRES---FPBV", FUELPRES_x + block_width / 2, FUELPRES_y, FPBV_x - valve_width / 2, FUELPRES_y)}}
+        {{ line("FUELFILL---FFBV", FUELFILL_x + block_width / 2, FUELFILL_y, FFBV_x - valve_width / 2, FUELFILL_y)}}
 
-    {{ line("FUELTANK---FMBV", FUELTANK_x, FUELTANK_y + tank_height / 2, FUELTANK_x, FMBV_y)}}
-    {{ line("FUELTANK---FMBV", FUELTANK_x, FMBV_y, FMBV_x, FMBV_y)}}
+        {{ tank("FUELTANK", FUELTANK_x, FUELTANK_y) }}
+        {{ block("FUELFILL", FUELFILL_x, FUELFILL_y) }}
+        {{ block("FUELPRES", FUELPRES_x, FUELPRES_y) }}
 
-    {{ line("OXYTANK---OMBV", OXYTANK_x, OXYTANK_y + tank_height / 2, OXYTANK_x, OMBV_y)}}
-    {{ line("OXYTANK---OMBV", OXYTANK_x, OMBV_y, OMBV_x, OMBV_y)}}
-
-    {{ line("FUELTANK---FFBV", FUELTANK_x, FUELTANK_y + tank_height / 2, FUELTANK_x, FFBV_y)}}
-    {{ line("FUELTANK---FFBV", FUELTANK_x, FFBV_y, FFBV_x, FFBV_y)}}
-
-    {{ line("OXYTANK---OFBV", OXYTANK_x, OXYTANK_y + tank_height / 2, OXYTANK_x, OFBV_y)}}
-    {{ line("OXYTANK---OFBV", OXYTANK_x, OFBV_y, OFBV_x, OFBV_y)}}
-
-    {{ line("FUELTANK---FVBV", FUELTANK_x, FUELTANK_y - tank_height / 2, FUELTANK_x, FVBV_y) }}
-    {{ line("FUELTANK---FVBV", FUELTANK_x, FVBV_y, FVBV_x, FVBV_y) }}
-
-    {{ line("OXYTANK---OVBV", OXYTANK_x, OXYTANK_y - tank_height / 2, OXYTANK_x, OVBV_y) }}
-    {{ line("OXYTANK---OVBV", OXYTANK_x, OVBV_y, OVBV_x, OVBV_y) }}
-
-    {{ line("FUELTANK---FPBV", FUELTANK_x, FUELTANK_y - tank_height / 2, FUELTANK_x, FPBV_y) }}
-    {{ line("FUELTANK---FPBV", FUELTANK_x, FPBV_y, FPBV_x, FPBV_y) }}
-
-    {{ line("OXYTANK---OPBV", OXYTANK_x, OXYTANK_y - tank_height / 2, OXYTANK_x, OPBV_y) }}
-    {{ line("OXYTANK---OPBV", OXYTANK_x, OPBV_y, OPBV_x, OPBV_y) }}
-
-    {{ line("OXYPRES---OPBV", OXYPRES_x - block_width / 2, OXYPRES_y, OPBV_x + valve_width / 2, OXYPRES_y)}}
-    {{ line("FUELPRES---FPBV", FUELPRES_x + block_width / 2, FUELPRES_y, FPBV_x - valve_width / 2, FUELPRES_y)}}
-
-    {{ line("OXYFILL---OFBV", OXYFILL_x - block_width / 2, OXYFILL_y, OFBV_x + valve_width / 2, OXYFILL_y)}}
-    {{ line("FUELFILL---FFBV", FUELFILL_x + block_width / 2, FUELFILL_y, FFBV_x - valve_width / 2, FUELFILL_y)}}
+        {{ valve("FMBV", FMBV_x, FMBV_y) }}
+        {{ valve("FFBV", FFBV_x, FFBV_y) }}
+        {{ valve("FPBV", FPBV_x, FPBV_y) }}
+        {{ valve("FVBV", FVBV_x, FVBV_y) }}
+        
+        {{ pressure_transducer("FPP", FPP_x, FPP_y, 0, -1) }}
+        {{ pressure_transducer("FTP", FTP_x, FTP_y, 0, -1) }}
+        
+        {{ thermocouple("FTT", FTT_x, FTT_y, -1, 0) }}
+    </g>
+    
+    <g fill="#0077cc">
+        {{ line("OMBV---ENGINE", OMBV_x, OMBV_y, ENGINE_x, ENGINE_y) }}
+        {{ line("OXYTANK---OMBV", OXYTANK_x, OXYTANK_y + tank_height / 2, OXYTANK_x, OMBV_y)}}
+        {{ line("OXYTANK---OMBV", OXYTANK_x, OMBV_y, OMBV_x, OMBV_y)}}
+        {{ line("OXYTANK---OFBV", OXYTANK_x, OXYTANK_y + tank_height / 2, OXYTANK_x, OFBV_y)}}
+        {{ line("OXYTANK---OFBV", OXYTANK_x, OFBV_y, OFBV_x, OFBV_y)}}
+        {{ line("OXYTANK---OVBV", OXYTANK_x, OXYTANK_y - tank_height / 2, OXYTANK_x, OVBV_y) }}
+        {{ line("OXYTANK---OVBV", OXYTANK_x, OVBV_y, OVBV_x, OVBV_y) }}
+        {{ line("OXYTANK---OPBV", OXYTANK_x, OXYTANK_y - tank_height / 2, OXYTANK_x, OPBV_y) }}
+        {{ line("OXYTANK---OPBV", OXYTANK_x, OPBV_y, OPBV_x, OPBV_y) }}
+        {{ line("OXYPRES---OPBV", OXYPRES_x - block_width / 2, OXYPRES_y, OPBV_x + valve_width / 2, OXYPRES_y)}}
+        {{ line("OXYFILL---OFBV", OXYFILL_x - block_width / 2, OXYFILL_y, OFBV_x + valve_width / 2, OXYFILL_y)}}
+        
+        {{ tank("OXYTANK", OXYTANK_x, OXYTANK_y) }}
+        {{ block("OXYFILL", OXYFILL_x, OXYFILL_y) }}
+        {{ block("OXYPRES", OXYPRES_x, OXYPRES_y) }}
+        
+        {{ valve("OMBV", OMBV_x, OMBV_y) }}
+        {{ valve("OFBV", OFBV_x, OFBV_y) }}
+        {{ valve("OPBV", OPBV_x, OPBV_y) }}
+        {{ valve("OVBV", OVBV_x, OVBV_y) }}
+        
+        {{ pressure_transducer("OPP", OPP_x, OPP_y, 0, -1) }}
+        {{ pressure_transducer("OTP", OTP_x, OTP_y, 0, -1) }}
+        
+        {{ thermocouple("OTT", OTT_x, OTT_y, 1, 0) }}
+    </g>
 
     {{ engine("ENGINE", ENGINE_x, ENGINE_y) }}
-
-    {{ tank("FUELTANK", FUELTANK_x, FUELTANK_y) }}
-    {{ tank("OXYTANK", OXYTANK_x, OXYTANK_y) }}
-
-    {{ valve("FMBV", FMBV_x, FMBV_y) }}
-    {{ valve("OMBV", OMBV_x, OMBV_y) }}
-
-    {{ valve("FFBV", FFBV_x, FFBV_y) }}
-    {{ valve("OFBV", OFBV_x, OFBV_y) }}
-
-    {{ valve("FPBV", FPBV_x, FPBV_y) }}
-    {{ valve("OPBV", OPBV_x, OPBV_y) }}
-    
-    {{ valve("FVBV", FVBV_x, FVBV_y) }}
-    {{ valve("OVBV", OVBV_x, OVBV_y) }}
-
-    {{ block("FUELFILL", FUELFILL_x, FUELFILL_y) }}
-    {{ block("OXYFILL", OXYFILL_x, OXYFILL_y) }}
-
-    {{ block("FUELPRES", FUELPRES_x, FUELPRES_y) }}
-    {{ block("OXYPRES", OXYPRES_x, OXYPRES_y) }}
-    
-    {{ pressure_transducer("FPP", FPP_x, FPP_y, 0, -1) }}
-    {{ pressure_transducer("OPP", OPP_x, OPP_y, 0, -1) }}
-
-    {{ pressure_transducer("FTP", FTP_x, FTP_y, 0, -1) }}
-    {{ pressure_transducer("OTP", OTP_x, OTP_y, 0, -1) }}
-
-    {{ thermocouple("FTT", FTT_x, FTT_y, -1, 0) }}
-    {{ thermocouple("OTT", OTT_x, OTT_y, 1, 0) }}
 
 </svg>
