@@ -27,7 +27,7 @@
 {# ENGINE SYMBOL
    Anchor: top middle. #}
 {% macro engine(id, x, y) %}
-    <g id="{{ id }}" transform="translate({{ x - engine_width / 2 }}, {{ y }})" stroke="white" stroke-width="2" >
+    <g id="{{ id }}" transform="translate({{ x - engine_width / 2 }}, {{ y }})" stroke="white" stroke-width="3" fill="none" >
     {% include "icons/engine.svg" %}
     </g>
 {% endmacro %}
@@ -35,7 +35,7 @@
 {# TANK SYMBOL
    Anchor: center  #}
 {% macro tank(id, x, y) %}
-    <g id="{{ id }}" transform="translate({{ x - tank_width / 2 }}, {{ y - tank_height / 2 }})">
+    <g id="{{ id }}" transform="translate({{ x - tank_width / 2 }}, {{ y - tank_height / 2 }})" fill="none">
     {% include "icons/tank.svg" %}
     </g>
 {% endmacro %}
@@ -43,7 +43,7 @@
 {# SVG BUTTON MACRO (rectangle + text + onclick callback)
    Anchor: top left #}
 {% macro button(text, onclick, x, y) %}
-    <g class="button" onclick="{{ onclick }}" transform="translate({{ x }}, {{ y }})">
+    <g class="button" onclick="{{ onclick }}" transform="translate({{ x }}, {{ y }})" fill="none">
         <rect x="0" y="0" width="{{ button_width }}" height="{{ button_height }}" fill="gray" stroke="none" rx="5" />
         <text x="{{ button_width / 2 }}" y="{{ button_height / 2 + 2 }}" text-anchor="middle" fill="white" stroke="none">{{ text }}</text>
     </g>
@@ -53,8 +53,8 @@
    Anchor: center #}
 {% macro valve(id, x, y) %}
     <g id="{{ id }}" transform="translate({{ x - valve_width / 2 }},{{ y -
-    valve_height / 2 }})" fill="white">
-        <rect class="box" x="{{ -(valve_box_width - valve_width) / 2 }}" y="{{ -(valve_box_height - valve_height) / 2 }}" width="{{ valve_box_width }}" height="{{ valve_box_height }}" stroke="none" />
+    valve_height / 2 }})">
+        <rect class="box" x="{{ -(valve_box_width - valve_width) / 2 }}" y="{{ -(valve_box_height - valve_height) / 2 }}" width="{{ valve_box_width }}" height="{{ valve_box_height }}" fill="none" stroke="none" />
 
         <text class="name" x="{{ valve_width / 2 }}" y="{{ -valve_text_offset }}" text-anchor="middle" dominant-baseline="central">
             {{ id }}
@@ -73,15 +73,15 @@
 
 {% macro block(id, x, y) %}
     <g id="{{ id }}" transform="translate({{ x - block_width / 2 }}, {{ y - block_height / 2 }})">
-        <rect x="0" y="0" width="{{ block_width }}" height="{{ block_height }}" fill="none" stroke="white" />
-        <text x="{{ block_width / 2 }}" y="{{ block_height / 2 }}" text-anchor="middle" dominant-baseline="central" fill="white" stroke="none">{{ id }}</text>
+        <rect x="0" y="0" width="{{ block_width }}" height="{{ block_height }}" fill="none"/>
+        <text x="{{ block_width / 2 }}" y="{{ block_height / 2 }}" text-anchor="middle" dominant-baseline="central">{{ id }}</text>
     </g>
 {% endmacro %}
 
 {# SENSOR ELEMENT 
    Anchor: where line connects #}
 {% macro sensor(icon, unit, id, x, y, dir_x, dir_y) %}
-    <g id="{{ id }}" transform="translate({{ x - sensor_width / 2 }}, {{ y - sensor_height / 2}})">
+    <g id="{{ id }}" transform="translate({{ x - sensor_width / 2 }}, {{ y - sensor_height / 2}})" fill="none">
 
     <text class="name" text-anchor="middle" dominant-baseline="central"
         x="{{ dir_x * (sensor_text_offset - sensor_width) + sensor_width / 2 }}"
@@ -226,7 +226,7 @@
         fill="none"
         xmlns="http://www.w3.org/2000/svg">
 
-    <g stroke="#ff3322">
+    <g stroke="#ff3322" fill="#ff3322">
         {{ line("FMBV---ENGINE", FMBV_x, FMBV_y, ENGINE_x, ENGINE_y) }}
         {{ line("FUELTANK---FMBV", FUELTANK_x, FUELTANK_y + tank_height / 2, FUELTANK_x, FMBV_y)}}
         {{ line("FUELTANK---FMBV", FUELTANK_x, FMBV_y, FMBV_x, FMBV_y)}}
@@ -254,7 +254,7 @@
         {{ thermocouple("FTT", FTT_x, FTT_y, -1, 0) }}
     </g>
     
-    <g stroke="#0077cc">
+    <g stroke="#0077cc" fill="#0077cc">
         {{ line("OMBV---ENGINE", OMBV_x, OMBV_y, ENGINE_x, ENGINE_y) }}
         {{ line("OXYTANK---OMBV", OXYTANK_x, OXYTANK_y + tank_height / 2, OXYTANK_x, OMBV_y)}}
         {{ line("OXYTANK---OMBV", OXYTANK_x, OMBV_y, OMBV_x, OMBV_y)}}

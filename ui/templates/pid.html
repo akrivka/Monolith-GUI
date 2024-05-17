@@ -67,8 +67,8 @@
             const value_element = element.querySelector(".value");
             if (value < VALVE_OPEN_ANGLE_THRESHOLD) {
                 // Valve is open
-                element.setAttribute("fill", "white");
-                element.setAttribute("stroke", "white");
+                element.setAttribute("fill", "currentColor");
+                element.setAttribute("stroke", "currentColor");
                 bg_box.setAttribute("fill", "none");
                 value_element.textContent = "";
             } if (value > VALVE_CLOSED_ANGLE_THRESHOLD) {
