@@ -52,12 +52,12 @@
     // Subscribe to the server-sent events
     const eventSource = new EventSource("/pid-stream");
     eventSource.onmessage = (msg) => {
-        const [type, id, value] = msg.data.split(",");
+        const [type, designator, value] = msg.data.split(",");
         // Find corresponding UI element
-        const element = document.getElementById(id);
+        const element = document.getElementById(designator);
         // Unknown element
         if (!element) {
-            console.error("Element not found: " + id);
+            console.error("Element not found: " + designator);
             return;
         }
         // Ball valve
@@ -87,8 +87,9 @@
             return;
         }
         // Pressure or temperature sensor
-        if (valve == "pres" || valve == "temp") {
-            const value_element = element.querySelector(".value");
+        if (type == "pres" || type == "temp") {
+            const value_element = element.querySelector(".sensor-value");
+
             value_element.textContent = value;
             return;
         }

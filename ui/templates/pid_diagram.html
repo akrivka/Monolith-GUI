@@ -9,9 +9,10 @@
 {% set button_width, button_height = 36, 18 %}
 {% set valve_width, valve_height = 36, 18 %}
 {% set valve_box_width, valve_box_height = 48, 36 %}
+{% set valve_text_offset = 60 %}
 {% set block_width, block_height = 90, 40 %}
 {% set sensor_width, sensor_height = 20, 20 %}
-{% set sensor_icon_offset, sensor_text_offset = 50, 65 %}
+{% set sensor_icon_offset, sensor_text_offset = 50, 70 %}
 
 
 {# MACROS
@@ -55,7 +56,9 @@
     valve_height / 2 }})" fill="white">
         <rect class="box" x="{{ -(valve_box_width - valve_width) / 2 }}" y="{{ -(valve_box_height - valve_height) / 2 }}" width="{{ valve_box_width }}" height="{{ valve_box_height }}" stroke="none" />
 
-        <text class="name" x="-15" y="3" text-anchor="end" fill="white" stroke="none">{{ id }}</text>
+        <text class="name" x="{{ valve_width / 2 }}" y="{{ -valve_text_offset }}" text-anchor="middle" dominant-baseline="central">
+            {{ id }}
+        </text>
 
         {{ button("open", "fetch('/valve-open/" + id + "')", 0, - valve_height * 2 ) }}
         {{ button("close", "fetch('/valve-close/" + id + "')", 0, valve_height * 2) }}
@@ -77,37 +80,41 @@
 
 {# SENSOR ELEMENT 
    Anchor: where line connects #}
-{% macro sensor(icon, id, x, y, dir_x, dir_y) %}
+{% macro sensor(icon, unit, id, x, y, dir_x, dir_y) %}
     <g id="{{ id }}" transform="translate({{ x - sensor_width / 2 }}, {{ y - sensor_height / 2}})">
 
-    <text class="name" text-anchor="end" fill="white" stroke="none"
-        x="{{ dir_x * sensor_text_offset * 1.5 - (dir_y|abs * sensor_width / 2) - 5}}"
-        y="{{ dir_y * sensor_text_offset + (dir_x|abs * sensor_height / 2) - 10}}">{{ id }}</text>
+    <text class="name" text-anchor="middle" dominant-baseline="central"
+        x="{{ dir_x * (sensor_text_offset - sensor_width) + sensor_width / 2 }}"
+        y="{{ dir_y * sensor_text_offset * 1.3 + sensor_height / 2 - dir_x|abs * sensor_width * 1.1 }}">{{ id }}</text>
 
-    <text class="value" text-anchor="left" fill="white" stroke="none"
-        x="{{ dir_x * sensor_text_offset * 1.5 - (dir_y|abs * sensor_width / 2)}}"
-        y="{{ dir_y * sensor_text_offset + (dir_x|abs * sensor_height / 2) }}">0</text>
-
-    <g transform="translate({{ -sensor_width / 2 + dir_x * sensor_icon_offset
-    }}, {{ -sensor_height / 2 + dir_y * sensor_icon_offset }})">
-        {% include icon %}
-
+    <g class="sensor-reading">
+    <text class="sensor-value" text-anchor="end"
+        x="{{ dir_x * sensor_text_offset * 1.1 + sensor_width / 2}}"
+        y="{{ dir_y * sensor_text_offset + sensor_height / 2 }}">0</text>
+    <text class="sensor-unit" text-anchor="start"
+        x="{{ dir_x * sensor_text_offset * 1.1 + sensor_width / 2 + 3}}"
+        y="{{ dir_y * sensor_text_offset + sensor_height / 2 }}">{{ unit }}</text>
     </g>
-    <line x1="{{ sensor_height / 2 }}" x2="{{ dir_x * (sensor_icon_offset) }}"
-        y1="{{ sensor_height / 2 }}" y2="{{ dir_y * (sensor_icon_offset) }}"></line>
+    
+    <g transform="translate({{ dir_x * sensor_icon_offset
+    }}, {{ dir_y * sensor_icon_offset }})">
+        {% include icon %}
+    </g>
+    <line x1="{{ sensor_width / 2 }}" x2="{{ dir_x * (sensor_icon_offset - sensor_width / 2) + sensor_width / 2 }}"
+        y1="{{ sensor_height / 2 }}" y2="{{ dir_y * (sensor_icon_offset - sensor_height / 2) + sensor_height / 2 }}"></line>
     </g>
 {% endmacro %}
 
 {# PRESSURE TRANSDUCER SYMBOL
    Anchor: where line connects #}
 {% macro pressure_transducer(id, x, y, dir_x, dir_y) %}
-    {{ sensor("icons/pressure_transducer.svg", id, x, y, dir_x, dir_y) }}
+    {{ sensor("icons/pressure_transducer.svg", "PSIG", id, x, y, dir_x, dir_y) }}
 {% endmacro %}
 
 {# THERMOCOUPLE SYMBOL
    Anchor: where line connects #}
 {% macro thermocouple(id, x, y, dir_x, dir_y) %}
-    {{ sensor("icons/thermocouple.svg", id, x, y, dir_x, dir_y) }}
+    {{ sensor("icons/thermocouple.svg", "°C", id, x, y, dir_x, dir_y) }}
 {% endmacro %}
 
 {# LINE MACRO #}
@@ -136,7 +143,7 @@
 {% set XPP_x_offset, XPP_y_offset = -50, line_above_tank_y_offset %}
 {% set XTT_x_offset, XTT_y_offset = 0, -(tank_height / 2 + 100 / 2) %}
 
-{% set XPRES_x_offset, XPRES_y_offset = 200, line_above_tank_y_offset %}
+{% set XPRES_x_offset, XPRES_y_offset = 230, line_above_tank_y_offset %}
 
 
 {# POSITIONS 
@@ -146,7 +153,7 @@
 {% set ENGINE_x, ENGINE_y = canvas_width / 2, canvas_height - 200 %}
 
 {% set FUELTANK_x, FUELTANK_y = ENGINE_x - XTANK_x_offset, ENGINE_y - XTANK_y_offset %}
-{% set OXYGENTANK_x, OXYGENTANK_y = ENGINE_x + XTANK_x_offset, ENGINE_y - XTANK_y_offset %}
+{% set OXYTANK_x, OXYTANK_y = ENGINE_x + XTANK_x_offset, ENGINE_y - XTANK_y_offset %}
 
 {% set FMBV_x, FMBV_y = ENGINE_x - XMBV_x_offset, ENGINE_y %}
 {% set OMBV_x, OMBV_y = ENGINE_x + XMBV_x_offset, ENGINE_y %}
@@ -157,23 +164,23 @@
 {% set FUELFILL_x, FUELFILL_y = ENGINE_x - XFILL_x_offset, ENGINE_y + XFILL_y_offset %}
 {% set OXYFILL_x, OXYFILL_y = ENGINE_x + XFILL_x_offset, ENGINE_y + XFILL_y_offset %}
 
-{% set FPRES_x, FPRES_y = FUELTANK_x - XPRES_x_offset, FUELTANK_y + XPRES_y_offset %}
-{% set OPRES_x, OPRES_y = OXYGENTANK_x + XPRES_x_offset, OXYGENTANK_y + XPRES_y_offset %}
+{% set FUELPRES_x, FUELPRES_y = FUELTANK_x - XPRES_x_offset, FUELTANK_y + XPRES_y_offset %}
+{% set OXYPRES_x, OXYPRES_y = OXYTANK_x + XPRES_x_offset, OXYTANK_y + XPRES_y_offset %}
 
 {% set FPBV_x, FPBV_y = FUELTANK_x - XPBV_x_offset, FUELTANK_y + XVBV_y_offset %}
-{% set OPBV_x, OPBV_y = OXYGENTANK_x + XPBV_x_offset, OXYGENTANK_y + XVBV_y_offset %}
+{% set OPBV_x, OPBV_y = OXYTANK_x + XPBV_x_offset, OXYTANK_y + XVBV_y_offset %}
 
 {% set FVBV_x, FVBV_y = FUELTANK_x - XVBV_x_offset, FUELTANK_y + XVBV_y_offset %}
-{% set OVBV_x, OVBV_y = OXYGENTANK_x + XVBV_x_offset, OXYGENTANK_y + XVBV_y_offset %}
+{% set OVBV_x, OVBV_y = OXYTANK_x + XVBV_x_offset, OXYTANK_y + XVBV_y_offset %}
 
 {% set FTP_x, FTP_y = FUELTANK_x + XTP_x_offset, FUELTANK_y + XTP_y_offset %}
-{% set OTP_x, OTP_y = OXYGENTANK_x - XTP_x_offset, OXYGENTANK_y + XTP_y_offset %}
+{% set OTP_x, OTP_y = OXYTANK_x - XTP_x_offset, OXYTANK_y + XTP_y_offset %}
 
 {% set FPP_x, FPP_y = FUELTANK_x + XPP_x_offset, FUELTANK_y + XPP_y_offset %}
-{% set OPP_x, OPP_y = OXYGENTANK_x - XPP_x_offset, OXYGENTANK_y + XPP_y_offset %}
+{% set OPP_x, OPP_y = OXYTANK_x - XPP_x_offset, OXYTANK_y + XPP_y_offset %}
 
 {% set FTT_x, FTT_y = FUELTANK_x + XTT_x_offset, FUELTANK_y + XTT_y_offset %}
-{% set OTT_x, OTT_y = OXYGENTANK_x + XTT_x_offset, FUELTANK_y + XTT_y_offset %}
+{% set OTT_x, OTT_y = OXYTANK_x + XTT_x_offset, FUELTANK_y + XTT_y_offset %}
 
 
 {############## ACTUAL DIAGRAM ##############}
@@ -191,6 +198,25 @@
     .button text {
         font: 12px sans-serif;
     }
+
+    .sensor-reading {
+        fill: white;
+        stroke: none;
+    }
+
+    .sensor-value {
+        font: 10pt sans-serif;
+    }
+
+    .sensor-unit {
+        font: 6pt sans-serif;
+    }
+
+    .name {
+        font: 8pt sans-serif;
+        fill: gray;
+        stroke: none;
+    }
 </style>
 
 <svg version="1.1"
@@ -206,31 +232,37 @@
     {{ line("FUELTANK---FMBV", FUELTANK_x, FUELTANK_y + tank_height / 2, FUELTANK_x, FMBV_y)}}
     {{ line("FUELTANK---FMBV", FUELTANK_x, FMBV_y, FMBV_x, FMBV_y)}}
 
-    {{ line("OXYGENTANK---OMBV", OXYGENTANK_x, OXYGENTANK_y + tank_height / 2, OXYGENTANK_x, OMBV_y)}}
-    {{ line("OXYGENTANK---OMBV", OXYGENTANK_x, OMBV_y, OMBV_x, OMBV_y)}}
+    {{ line("OXYTANK---OMBV", OXYTANK_x, OXYTANK_y + tank_height / 2, OXYTANK_x, OMBV_y)}}
+    {{ line("OXYTANK---OMBV", OXYTANK_x, OMBV_y, OMBV_x, OMBV_y)}}
 
     {{ line("FUELTANK---FFBV", FUELTANK_x, FUELTANK_y + tank_height / 2, FUELTANK_x, FFBV_y)}}
     {{ line("FUELTANK---FFBV", FUELTANK_x, FFBV_y, FFBV_x, FFBV_y)}}
 
-    {{ line("OXYGENTANK---OFBV", OXYGENTANK_x, OXYGENTANK_y + tank_height / 2, OXYGENTANK_x, OFBV_y)}}
-    {{ line("OXYGENTANK---OFBV", OXYGENTANK_x, OFBV_y, OFBV_x, OFBV_y)}}
+    {{ line("OXYTANK---OFBV", OXYTANK_x, OXYTANK_y + tank_height / 2, OXYTANK_x, OFBV_y)}}
+    {{ line("OXYTANK---OFBV", OXYTANK_x, OFBV_y, OFBV_x, OFBV_y)}}
 
     {{ line("FUELTANK---FVBV", FUELTANK_x, FUELTANK_y - tank_height / 2, FUELTANK_x, FVBV_y) }}
     {{ line("FUELTANK---FVBV", FUELTANK_x, FVBV_y, FVBV_x, FVBV_y) }}
 
-    {{ line("OXYGENTANK---OVBV", OXYGENTANK_x, OXYGENTANK_y - tank_height / 2, OXYGENTANK_x, OVBV_y) }}
-    {{ line("OXYGENTANK---OVBV", OXYGENTANK_x, OVBV_y, OVBV_x, OVBV_y) }}
+    {{ line("OXYTANK---OVBV", OXYTANK_x, OXYTANK_y - tank_height / 2, OXYTANK_x, OVBV_y) }}
+    {{ line("OXYTANK---OVBV", OXYTANK_x, OVBV_y, OVBV_x, OVBV_y) }}
 
     {{ line("FUELTANK---FPBV", FUELTANK_x, FUELTANK_y - tank_height / 2, FUELTANK_x, FPBV_y) }}
     {{ line("FUELTANK---FPBV", FUELTANK_x, FPBV_y, FPBV_x, FPBV_y) }}
 
-    {{ line("OXYGENTANK---OPBV", OXYGENTANK_x, OXYGENTANK_y - tank_height / 2, OXYGENTANK_x, OPBV_y) }}
-    {{ line("OXYGENTANK---OPBV", OXYGENTANK_x, OPBV_y, OPBV_x, OPBV_y) }}
+    {{ line("OXYTANK---OPBV", OXYTANK_x, OXYTANK_y - tank_height / 2, OXYTANK_x, OPBV_y) }}
+    {{ line("OXYTANK---OPBV", OXYTANK_x, OPBV_y, OPBV_x, OPBV_y) }}
+
+    {{ line("OXYPRES---OPBV", OXYPRES_x - block_width / 2, OXYPRES_y, OPBV_x + valve_width / 2, OXYPRES_y)}}
+    {{ line("FUELPRES---FPBV", FUELPRES_x + block_width / 2, FUELPRES_y, FPBV_x - valve_width / 2, FUELPRES_y)}}
+
+    {{ line("OXYFILL---OFBV", OXYFILL_x - block_width / 2, OXYFILL_y, OFBV_x + valve_width / 2, OXYFILL_y)}}
+    {{ line("FUELFILL---FFBV", FUELFILL_x + block_width / 2, FUELFILL_y, FFBV_x - valve_width / 2, FUELFILL_y)}}
 
     {{ engine("ENGINE", ENGINE_x, ENGINE_y) }}
 
     {{ tank("FUELTANK", FUELTANK_x, FUELTANK_y) }}
-    {{ tank("OXYGENTANK", OXYGENTANK_x, OXYGENTANK_y) }}
+    {{ tank("OXYTANK", OXYTANK_x, OXYTANK_y) }}
 
     {{ valve("FMBV", FMBV_x, FMBV_y) }}
     {{ valve("OMBV", OMBV_x, OMBV_y) }}
@@ -247,8 +279,8 @@
     {{ block("FUELFILL", FUELFILL_x, FUELFILL_y) }}
     {{ block("OXYFILL", OXYFILL_x, OXYFILL_y) }}
 
-    {{ block("FUELPRES", FPRES_x, FPRES_y) }}
-    {{ block("OXYPRES", OPRES_x, OPRES_y) }}
+    {{ block("FUELPRES", FUELPRES_x, FUELPRES_y) }}
+    {{ block("OXYPRES", OXYPRES_x, OXYPRES_y) }}
     
     {{ pressure_transducer("FPP", FPP_x, FPP_y, 0, -1) }}
     {{ pressure_transducer("OPP", OPP_x, OPP_y, 0, -1) }}
