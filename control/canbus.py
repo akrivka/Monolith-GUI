@@ -5,6 +5,7 @@
 import sys
 from lib.util import time_ms
 import csv
+import datetime
 import nixnet
 from nixnet import system, constants, types
 
@@ -59,6 +60,16 @@ class CanBus:
         self.output_session.intf.baud_rate =  250000
         self.output_session.intf.can_fd_baud_rate = 250000
 
+        # Format the current time as a string
+        formatted_time = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+
+        # Open a file to write raw CAN messages to
+        self.raw_can_file = open(f"raw_can_{formatted_time}.csv", "w")
+
+        # Write the header row
+        self.raw_can_file.write("timestamp,can_id,data\n")
+
+
     def start(self):
         # Start CanBus session
         self.input_session.start()
@@ -68,7 +79,9 @@ class CanBus:
         # (it's an array because there could've been multiple)
         frames = self.input_session.frames.read(10000, constants.TIMEOUT_NONE)
 
-        # TODO: IMPORTANT!!! SAVE RAW CAN MESSAGES HERE.
+        for frame in frames:
+            # Write the frame to the raw_can_file
+            self.raw_can_file.write(f"{frame.timestamp},{frame.identifier},\"{frame.payload}\"\n")    
 
         # Return each one one by one to the control loop, instantied as 
         # a Python class defined by us
