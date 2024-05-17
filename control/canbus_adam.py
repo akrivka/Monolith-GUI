@@ -86,6 +86,3 @@ class CanBus:
 
         # Send the frame (through the nixnet output session)
         self.output_session.frames.write([frame])
-
-        if __debug__:
-            print(f"sent messsage {frame}")
